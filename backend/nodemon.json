@@ -1,0 +1,9 @@
+{
+  "watch": ["server.js", "routes/", "controllers/", "models/", "config/"],
+  "ext": "js,json",
+  "ignore": ["node_modules/", "*.log", "*.tmp", ".git/"],
+  "exec": "node server.js",
+  "delay": 1000,
+  "restartable": "rs",
+  "verbose": false
+}

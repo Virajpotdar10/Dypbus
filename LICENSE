@@ -1,0 +1,41 @@
+# Bus Fleet Management System - System Purpose and Workflow
+
+This system was built for the D.Y. Patil Transport Facility to solve the challenges of managing student transportation. It replaces inefficient manual processes with a modern, real-time, and role-based digital platform.
+
+## Purpose
+
+The primary goal is to provide a centralized and synchronized system for administrators and bus drivers to manage student data, routes, and fee payments efficiently and securely.
+
+## Workflow
+
+The system operates based on two main user roles:
+
+1.  **Admin (Head of Transport):** Has global access to a comprehensive dashboard. Admins can perform full CRUD (Create, Read, Update, Delete) operations on all drivers, routes, and students. They oversee the entire transportation system.
+
+2.  **Driver:** Has restricted access to a mobile-friendly dashboard. Drivers can only view and manage their assigned routes and the students on those routes. They can update student information and fee status in real-time.
+
+All data changes are instantly synchronized across all connected users (Admins and Drivers) using Socket.IO, ensuring everyone has the most up-to-date information.
+
+--- 
+
+# MIT License
+
+Copyright (c) 2024
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
