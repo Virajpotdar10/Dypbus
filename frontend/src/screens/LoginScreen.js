@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import logo from '../bus.jpeg';
+import logo from './168.jpg';
+
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ const LoginScreen = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5001/api/v1/auth/login',
+        `${process.env.REACT_APP_API_URL}/api/v1/auth/login`,
         { email, password },
         config
       );
