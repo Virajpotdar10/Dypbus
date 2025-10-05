@@ -96,15 +96,35 @@ const DashboardScreen = () => {
       console.log('Socket.IO connected successfully!');
     });
   
-    // Listen for updates from the server
-    newSocket.on('routesUpdated', (updatedRoutes) => {
-      setRoutes(updatedRoutes);
-    });
-  
-    newSocket.on('studentsUpdated', (data) => {
-      // You can add logic here to update students if needed
-      console.log('Received student update:', data);
-    });
+// Route events
+newSocket.on('route:created', ({ route }) => {
+  setRoutes(prev => {
+    if (prev.some(r => r._id === route._id)) return prev;
+    return [...prev, route];
+  });
+});
+
+newSocket.on('route:updated', ({ route }) => {
+  setRoutes(prev => prev.map(r => (r._id === route._id ? route : r)));
+});
+
+newSocket.on('route:deleted', ({ routeId }) => {
+  setRoutes(prev => prev.filter(r => r._id !== routeId));
+});
+
+// Student events (optional on dashboard, but useful if you surface counts)
+newSocket.on('student:created', (data) => {
+  // Optionally refetch route list or update counters if you show them here
+  // console.log('student:created', data);
+});
+
+newSocket.on('student:updated', (data) => {
+  // console.log('student:updated', data);
+});
+
+newSocket.on('student:deleted', (data) => {
+  // console.log('student:deleted', data);
+});
   
     // Clean up the connection when the component unmounts
     return () => {
