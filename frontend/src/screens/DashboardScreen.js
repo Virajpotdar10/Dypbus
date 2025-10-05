@@ -30,6 +30,7 @@ const DashboardScreen = () => {
   const [routeNumber, setRouteNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [socket, setSocket] = useState(null);
 
   const navigate = useNavigate();
 
@@ -74,19 +75,41 @@ const DashboardScreen = () => {
 
   useEffect(() => {
     if (!user) return;
-    
+  
     const socketURL = process.env.NODE_ENV === 'production' 
-    ? process.env.REACT_APP_API_URL 
-    : 'http://localhost:5001';
-    
-    io(socketURL, { // <-- Change API.defaults.baseURL to socketURL
+      ? process.env.REACT_APP_API_URL 
+      : 'http://localhost:5001';
+  
+    // Create and store the socket instance
+    const newSocket = io(socketURL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 500,
       withCredentials: true,
     });
-    // ... rest of the code stays the same
+  
+    setSocket(newSocket);
+  
+    // Listen for 'connect' event
+    newSocket.on('connect', () => {
+      console.log('Socket.IO connected successfully!');
+    });
+  
+    // Listen for updates from the server
+    newSocket.on('routesUpdated', (updatedRoutes) => {
+      setRoutes(updatedRoutes);
+    });
+  
+    newSocket.on('studentsUpdated', (data) => {
+      // You can add logic here to update students if needed
+      console.log('Received student update:', data);
+    });
+  
+    // Clean up the connection when the component unmounts
+    return () => {
+      newSocket.disconnect();
+    };
   }, [user]);
 
   useEffect(() => {
