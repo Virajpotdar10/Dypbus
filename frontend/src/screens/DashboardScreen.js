@@ -76,7 +76,7 @@ const DashboardScreen = () => {
     if (!user) return;
     
     const socketURL = process.env.NODE_ENV === 'production' 
-      ? window.location.origin 
+    ? process.env.
       : 'http://localhost:5001';
   
     io(socketURL, { // <-- Change API.defaults.baseURL to socketURL
