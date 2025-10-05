@@ -78,7 +78,7 @@ const DashboardScreen = () => {
     const socketURL = process.env.NODE_ENV === 'production' 
     ? process.env.REACT_APP_API_URL 
     : 'http://localhost:5001';
-  
+    
     io(socketURL, { // <-- Change API.defaults.baseURL to socketURL
       transports: ['websocket', 'polling'],
       reconnection: true,
