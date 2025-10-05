@@ -30,7 +30,7 @@ const DashboardScreen = () => {
   const [routeNumber, setRouteNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [socket, setSocket] = useState(null);
+  const [, setSocket] = useState(null);
 
   const navigate = useNavigate();
 
