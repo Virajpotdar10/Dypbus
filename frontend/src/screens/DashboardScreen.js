@@ -17,7 +17,6 @@ const DashboardScreen = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddRouteModal, setShowAddRouteModal] = useState(false);
   const [routeToDelete, setRouteToDelete] = useState(null);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('profile');
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
@@ -80,7 +79,7 @@ const DashboardScreen = () => {
       ? window.location.origin 
       : 'http://localhost:5001';
   
-    const newSocket = io(socketURL, { // <-- Change API.defaults.baseURL to socketURL
+    io(socketURL, { // <-- Change API.defaults.baseURL to socketURL
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import API from '../api'; // Use the centralized API instance
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus, FiChevronDown, FiChevronUp, FiEdit2, FiTrash2, FiArrowLeft, FiFilter, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus, FiChevronDown, FiEdit2, FiTrash2, FiArrowLeft, FiFilter, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { toast } from 'react-toastify'; 
-import io from 'socket.io-client';  
 import './StudentsScreen.css';
 
 const StudentsScreen = () => {
@@ -208,12 +207,6 @@ const [activeStudentId, setActiveStudentId] = useState(null);
       toast.error('Could not delete student');
     }
   };
-
-  const handleRowClick = (student) => {
-    setSelectedStudent(student);
-    setIsPanelOpen(true);
-  };
-
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -550,20 +543,6 @@ const [activeStudentId, setActiveStudentId] = useState(null);
   );
 };
 
-const StudentRow = ({ student, onRowClick }) => (
-  <div className="student-row" onClick={() => onRowClick(student)}>
-    <div className="student-info">
-      <strong>{student.name}</strong>
-      <span>{student.mobileNumber}</span>
-    </div>
-    <div className="student-details">
-      <span>{student.stop}</span>
-      <span className={student.feeStatus === 'Paid' ? 'fee-status-paid' : 'fee-status-not-paid'}>{student.feeStatus}</span>
-    </div>
-    <div className="expand-icon"><FiChevronRight /></div>
-  </div>
-);
-
 const StudentSlidingPanel = ({ student, onClose, onEdit, onDelete }) => {
   if (!student) return null;
 
@@ -636,5 +615,4 @@ const StudentCard = ({ student, isActive, onToggleDetails, onEdit, onDelete, onT
     )}
   </div>
 );
-
 export default StudentsScreen;

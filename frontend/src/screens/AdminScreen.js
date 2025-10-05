@@ -14,11 +14,9 @@ import {
   FiPlus, 
   FiEdit, 
   FiTrash2, 
-  FiKey,
   FiDownload,
   FiLogOut,
   FiHome,
-  FiFilter,
   FiX
 } from 'react-icons/fi';
 
