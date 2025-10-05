@@ -97,7 +97,7 @@ app.use('/api/v1/pdf', require('./routes/pdf'));
 // Serve frontend production build
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
-  const clientBuildPath = path.join(__dirname, '..', 'frontend', 'build');
+  const clientBuildPath = path.resolve(__dirname, '..', 'frontend', 'build');
   app.use(express.static(clientBuildPath));
   app.get('*', (req, res) => {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
