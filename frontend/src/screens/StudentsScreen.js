@@ -14,7 +14,7 @@ const StudentsScreen = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [selectedStudent, setSelectedStudent] = useState(null); // For sliding panel
+  const [selectedStudent] = useState(null); // For sliding panel
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
