@@ -263,12 +263,7 @@ newSocket.on('student:deleted', (data) => {
       {!dataLoaded && !loading && <div className="error-screen">Failed to load data</div>}
       {dataLoaded && (
         <div>
-          <div className="banner">
-            <FaBus className="banner-icon" />
-            <h1 className="banner-title">D.Y Patil Transport Facility</h1>
-          </div>
-
-          <header className="header">
+         <header className="header">
             <div className="header-left">
               <h2 className="header-title">Bus Driver Dashboard</h2>
             </div>
