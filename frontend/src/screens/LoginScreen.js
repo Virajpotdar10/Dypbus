@@ -1,10 +1,57 @@
-{{ ... }}
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from './168.jpg';
-import './LoginScreen.css'; // Import the new CSS file
+import './LoginScreen.css';
 
 const LoginScreen = () => {
-{{ ... }}
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const stored = localStorage.getItem('userInfo');
+    if (stored) {
+      navigate('/');
+    }
+  }, [navigate]);
+
+  const loginHandler = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/auth/login`,
+        { email, password },
+        config
+      );
+
+      const userInfo = response?.data;
+
+      if (!userInfo || !userInfo.token) {
+        throw new Error('Login failed: no token returned by server.');
+      }
+
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      navigate('/');
+    } catch (err) {
+      const message = err?.response?.data?.msg || err?.response?.data?.message || err?.message || 'Login failed';
+      setError(message);
+      setTimeout(() => {
+        setError('');
+      }, 5000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
