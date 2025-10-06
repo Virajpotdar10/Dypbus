@@ -11,122 +11,144 @@ body {
   background-color: #f5f7fa;
 }
 
-/* New Mobile-Friendly Header Styles */
-
-.header {
-  background-color: #ffffff;
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid #eef2f7;
-  position: sticky;
-  top: 0;
-  z-index: 999;
-}
-
-.header-title {
+/* ===== GENERAL STYLE ===== */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f8f9ff;
   margin: 0;
-  font-weight: 600;
-  color: #1a237e;
-  font-size: 1.25rem;
+  padding: 0;
 }
 
-.header-controls {
+/* ===== HEADER CONTAINER ===== */
+.header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 15px 25px;
+  border-bottom: 2px solid #e7e9f5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
 }
 
-.user-info {
+/* ===== LEFT SIDE: TITLE ===== */
+.header-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #12227c;
+}
+
+/* ===== RIGHT SIDE: PROFILE + BUTTON ===== */
+.header-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 0.8rem;
-  background-color: #f8f9ff;
-  border-radius: 20px;
-  border: 1px solid #e0e7ff;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
-.user-info:hover {
-  background-color: #f0f2ff;
+/* Profile Card */
+.profile-card {
+  display: flex;
+  align-items: center;
+  background: #f9faff;
+  border: 1px solid #d9dff8;
+  border-radius: 50px;
+  padding: 6px 14px;
+  box-shadow: 0 3px 6px rgba(17, 34, 124, 0.05);
 }
 
-.user-avatar {
-  width: 32px;
-  height: 32px;
+.profile-icon {
+  background: #12227c;
+  color: white;
   border-radius: 50%;
-  background-color: #1a237e;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.profile-info h4 {
+  font-size: 14px;
+  margin: 0;
+  color: #12227c;
+}
+
+.profile-info span {
+  font-size: 12px;
+  color: #7b7b8a;
+}
+
+/* ===== ADMIN DASHBOARD BUTTON ===== */
+.admin-btn {
+  background: linear-gradient(90deg, #12227c, #2f47d1);
   color: white;
-  font-size: 1rem;
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name {
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 10px;
   font-weight: 600;
-  color: #1a237e;
-  font-size: 0.9rem;
-  line-height: 1;
+  transition: all 0.3s ease;
 }
 
-.user-role {
-  color: #667085;
-  font-size: 0.75rem;
-  text-transform: capitalize;
+.admin-btn:hover {
+  background: linear-gradient(90deg, #2f47d1, #12227c);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(18, 34, 124, 0.2);
 }
 
-.logout-button {
+/* ===== LOGOUT BUTTON ===== */
+.logout-btn {
+  background: #fff5f5;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ffeef0;
-  color: #d92d20;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  transition: background-color 0.2s, color 0.2s;
+  color: #e63946;
+  font-size: 18px;
+  transition: all 0.3s ease;
 }
 
-.logout-button:hover {
-  background-color: #d92d20;
-  color: white;
+.logout-btn:hover {
+  background: #ffe3e3;
+  transform: scale(1.05);
 }
 
-.logout-button span {
-  display: none; /* Hide text by default */
-}
-
-/* Responsive adjustments for the new header */
-@media (max-width: 480px) {
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
   .header {
-    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
   }
 
   .header-title {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    text-align: left;
   }
 
-  .user-details {
-    display: none; /* Hide name and role on very small screens */
+  .header-right {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
   }
 
-  .user-info {
-    padding: 0.25rem;
+  .admin-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .profile-card {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
+
 
 /* Main Layout */
 .main-container {
