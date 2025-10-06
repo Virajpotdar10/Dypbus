@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import API from '../api';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiEye, FiEyeOff, FiLogOut, FiUser, FiPlus, FiTrash2, FiChevronRight, FiLock, FiEdit2, FiX, FiDownload } from 'react-icons/fi';
-import { FaBus } from 'react-icons/fa';
 import io from 'socket.io-client';
 import './DashboardScreen.css';
 
