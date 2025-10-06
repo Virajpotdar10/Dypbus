@@ -30,7 +30,8 @@ const DashboardScreen = () => {
   const [routeNumber, setRouteNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [, setSocket] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+const [socket, setSocket] = useState(null);
 
   const navigate = useNavigate();
 

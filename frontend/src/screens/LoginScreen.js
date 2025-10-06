@@ -8,6 +8,7 @@ const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,6 +20,7 @@ const LoginScreen = () => {
 
   const loginHandler = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const config = {
       headers: {
@@ -49,6 +51,8 @@ const LoginScreen = () => {
       setTimeout(() => {
         setError('');
       }, 5000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -195,23 +199,24 @@ const LoginScreen = () => {
           
           <button 
             type="submit" 
+            disabled={loading}
             style={{
               width: '100%',
               padding: '0.75rem',
-              backgroundColor: '#1a237e',
+              backgroundColor: loading ? '#ccc' : '#1a237e',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               fontSize: '1rem',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'background-color 0.3s',
               marginBottom: '1rem',
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#303f9f'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#1a237e'}
+            onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#303f9f')}
+            onMouseOut={(e) => !loading && (e.target.style.backgroundColor = '#1a237e')}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
 
           <div style={{

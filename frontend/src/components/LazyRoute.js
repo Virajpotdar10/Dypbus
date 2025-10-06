@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import MainLayout from './MainLayout'; // Import the new layout
 
 // Lazy load components for better performance
 const DashboardScreen = React.lazy(() => import('../screens/DashboardScreen'));
@@ -109,10 +110,10 @@ class LazyErrorBoundary extends React.Component {
 }
 
 // Lazy route wrapper component
-const LazyRoute = ({ children }) => (
+const LazyRoute = ({ children, layout: Layout }) => (
   <LazyErrorBoundary>
     <Suspense fallback={<LoadingSpinner />}>
-      {children}
+      {Layout ? <Layout>{children}</Layout> : children}
     </Suspense>
   </LazyErrorBoundary>
 );
@@ -136,22 +137,22 @@ const AppRoutes = () => (
       </LazyRoute>
     } />
     <Route path="/" element={
-      <LazyRoute>
+      <LazyRoute layout={MainLayout}>
         <DashboardScreen />
       </LazyRoute>
     } />
     <Route path="/route/:routeId/students" element={
-      <LazyRoute>
+      <LazyRoute layout={MainLayout}>
         <StudentsScreen />
       </LazyRoute>
     } />
     <Route path="/all-students" element={
-      <LazyRoute>
+      <LazyRoute layout={MainLayout}>
         <AllStudentsScreen />
       </LazyRoute>
     } />
     <Route path="/admin" element={
-      <LazyRoute>
+      <LazyRoute layout={MainLayout}>
         <AdminScreen />
       </LazyRoute>
     } />
