@@ -847,14 +847,6 @@ body {
     padding: 0 1rem 1rem 1rem; /* Add padding */
   }
 }
-/*
-  ========================================
-  Bus Driver Dashboard - Responsive Styles
-  ========================================
-*/
-
-/* --- Global & Font Styles --- */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 body {
   margin: 0;
