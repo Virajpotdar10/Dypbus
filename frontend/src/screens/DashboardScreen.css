@@ -847,3 +847,336 @@ body {
     padding: 0 1rem 1rem 1rem; /* Add padding */
   }
 }
+/*
+  ========================================
+  Bus Driver Dashboard - Responsive Styles
+  ========================================
+*/
+
+/* --- Global & Font Styles --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9ff;
+  color: #344054;
+  line-height: 1.6;
+}
+
+* {
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* --- Hide College Banner --- */
+header[style*="background-color: rgb(0, 32, 91)"] {
+  display: none !important;
+}
+
+/* --- Main Page & Content Layout --- */
+.page {
+  min-height: 100vh;
+  background-color: #f8f9ff;
+}
+
+.main-container {
+  display: flex;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.content-header h3 {
+  color: #0b1e73;
+  font-weight: 600;
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+/* --- Header --- */
+.header {
+  background-color: #ffffff;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid #eaecf0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-title {
+  margin: 0;
+  font-weight: 600;
+  color: #1a2b8f;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: #f8f9ff;
+  border-radius: 24px;
+  border: 1px solid #e0e7ff;
+  cursor: pointer;
+}
+
+.user-info:hover {
+  background-color: #f0f2ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(26, 43, 143, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #1a2b8f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #0b1e73;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.user-role {
+  color: #667085;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fef3f2;
+  color: #d92d20;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.logout-button:hover {
+  background-color: #d92d20;
+  color: white;
+  transform: scale(1.1);
+}
+
+.logout-button span {
+  display: none;
+}
+
+/* --- Buttons --- */
+.primary-button {
+  background-image: linear-gradient(45deg, #1a2b8f 0%, #0b1e73 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(26, 43, 143, 0.2);
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(26, 43, 143, 0.3);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+/* --- Route Cards --- */
+.route-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f0f0;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.card-title {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #0b1e73;
+  font-weight: 600;
+  font-size: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.driver-name {
+  font-size: 0.9rem;
+  color: #667085;
+  margin-bottom: 1.5rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.view-button, .delete-button, .download-button {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.view-button {
+  background-color: #1a2b8f;
+  color: white;
+}
+
+.view-button:hover {
+  background-color: #0b1e73;
+}
+
+.delete-button {
+  background-color: #fef3f2;
+  color: #d92d20;
+}
+
+.delete-button:hover {
+  background-color: #d92d20;
+  color: white;
+}
+
+.download-button {
+  background-color: #eff8ff;
+  color: #175cd3;
+}
+
+.download-button:hover {
+  background-color: #175cd3;
+  color: white;
+}
+
+/*
+  ========================================
+  Responsive Media Queries
+  ========================================
+*/
+
+/* --- Tablet (max-width: 768px) --- */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1.5rem;
+  }
+
+  .header {
+    padding: 1rem 1.5rem;
+  }
+
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .primary-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --- Mobile (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .main-content {
+    padding: 1rem;
+  }
+
+  .header {
+    padding: 0.75rem 1rem;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .user-details {
+    display: none;
+  }
+
+  .user-info {
+    padding: 0.3rem;
+  }
+
+  .route-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+}
