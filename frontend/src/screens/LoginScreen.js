@@ -117,7 +117,14 @@ const LoginScreen = () => {
             disabled={loading}
             className="submit-btn"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? (
+              <>
+              <span className="spinner"></span>
+              Logging in...
+              </>
+            )  : (
+              'Login'
+            )}
           </button>
 
           <div className="register-link">

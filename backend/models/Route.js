@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+
 const RouteSchema = new mongoose.Schema({
   routeName: {
     type: String,
@@ -14,4 +15,6 @@ const RouteSchema = new mongoose.Schema({
   },
 });
 
+RouteSchema.index({ routeName: 1 });
+RouteSchema.index({ driver: 1 });
 module.exports = mongoose.model('Route', RouteSchema);

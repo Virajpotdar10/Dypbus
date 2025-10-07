@@ -100,7 +100,6 @@
   color: #1a237e;
   text-decoration: none;
 }
-
 .submit-btn {
   width: 100%;
   padding: 0.75rem;
@@ -113,6 +112,9 @@
   cursor: pointer;
   transition: background-color 0.3s;
   margin-bottom: 1rem;
+  display: flex; /* Add flex for alignment */
+  align-items: center; /* Center items vertically */
+  justify-content: center; /* Center items horizontally */
 }
 
 .submit-btn:hover {
@@ -120,8 +122,24 @@
 }
 
 .submit-btn:disabled {
-  background-color: #ccc;
+  background-color: #9fa8da; /* Lighter color for disabled state */
   cursor: not-allowed;
+}
+
+.submit-btn .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .register-link {

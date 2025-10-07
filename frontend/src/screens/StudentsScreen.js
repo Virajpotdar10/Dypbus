@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import API from '../api'; // Use the centralized API instance
+import API, { socket } from '../api'; // Use the centralized API instance and import socket
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus, FiChevronDown, FiEdit2, FiTrash2, FiArrowLeft, FiFilter, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { toast } from 'react-toastify'; 
@@ -104,7 +104,56 @@ const [activeStudentId, setActiveStudentId] = useState(null);
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+  useEffect(() => {
+    if (!routeId) return;
 
+    // Connect the socket and join the room
+    socket.connect();
+    socket.emit('joinRouteRoom', routeId);
+
+    // Listener for when a student is updated
+    const handleStudentUpdate = (updatedStudent) => {
+      if (updatedStudent.route === routeId) {
+        setStudents((prevStudents) =>
+          prevStudents.map((s) => (s._id === updatedStudent._id ? updatedStudent : s))
+        );
+        toast.info(`Student ${updatedStudent.name} was updated.`);
+      }
+    };
+
+    // Listener for when a new student is added
+    const handleStudentAdd = (newStudent) => {
+      if (newStudent.route === routeId) {
+        setStudents((prevStudents) => [...prevStudents, newStudent]);
+        setTotalStudents((prev) => prev + 1);
+        toast.info(`New student ${newStudent.name} was added.`);
+      }
+    };
+
+    // Listener for when a student is deleted
+    const handleStudentDelete = (deletedStudentId, studentRouteId) => {
+      if (studentRouteId === routeId) {
+        setStudents((prevStudents) =>
+          prevStudents.filter((s) => s._id !== deletedStudentId)
+        );
+        setTotalStudents((prev) => prev - 1);
+        toast.warn('A student was deleted.');
+      }
+    };
+
+    socket.on('studentUpdated', handleStudentUpdate);
+    socket.on('studentAdded', handleStudentAdd);
+    socket.on('studentDeleted', handleStudentDelete);
+
+    // Cleanup on component unmount
+    return () => {
+      socket.emit('leaveRouteRoom', routeId);
+      socket.off('studentUpdated', handleStudentUpdate);
+      socket.off('studentAdded', handleStudentAdd);
+      socket.off('studentDeleted', handleStudentDelete);
+      socket.disconnect();
+    };
+  }, [routeId]);
   const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleFormSubmit = async (e) => {

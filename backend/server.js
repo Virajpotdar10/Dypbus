@@ -137,9 +137,22 @@ const PORT = process.env.PORT || 5001;
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('User connected via Socket.IO');
+  console.log(`User connected: ${socket.id}`);
+
+  // Join a room specific to a route
+  socket.on('joinRouteRoom', (routeId) => {
+    socket.join(routeId);
+    console.log(`Socket ${socket.id} joined room ${routeId}`);
+  });
+
+  // Leave a room
+  socket.on('leaveRouteRoom', (routeId) => {
+    socket.leave(routeId);
+    console.log(`Socket ${socket.id} left room ${routeId}`);
+  });
+
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    console.log(`User disconnected: ${socket.id}`);
   });
 });
 

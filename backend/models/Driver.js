@@ -52,6 +52,9 @@ const DriverSchema = new mongoose.Schema({
     },
   ],
 });
+// Add indexes for performance
+DriverSchema.index({ email: 1 });
+DriverSchema.index({ role: 1 });
 
 // Encrypt password using bcrypt
 DriverSchema.pre('save', async function (next) {

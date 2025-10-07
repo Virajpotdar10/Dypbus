@@ -213,7 +213,10 @@ if  (mobileNumber && mobileNumber.trim() !== ''){
     invalidateCache.students(routeId);
 
     // Emit real-time event
-    emitStudentEvent(req, 'created', { student: newStudent, createdBy: req.user?.name || 'Unknown' });
+    const io = req.app.get('io');
+    if (io) {
+      io.to(routeId).emit('studentAdded', newStudent);
+    }
 
     res.status(201).json({ success: true, data: newStudent });
   } catch (err) {
@@ -285,7 +288,11 @@ exports.updateStudent = async (req, res, next) => {
     invalidateCache.students(updatedStudent.route._id);
 
     // Emit real-time event
-    emitStudentEvent(req, 'updated', { student: updatedStudent, updatedBy: req.user?.name || 'Unknown' });
+    const io = req.app.get('io');
+    if (io) {
+      const routeId = updatedStudent.route._id.toString();
+      io.to(routeId).emit('studentUpdated', updatedStudent);
+    }
 
     res.status(200).json({ success: true, data: updatedStudent });
   } catch (err) {
@@ -328,7 +335,11 @@ exports.deleteStudent = async (req, res, next) => {
     invalidateCache.students(student.route._id);
 
     // Emit real-time event
-    emitStudentEvent(req, 'deleted', { studentId: req.params.id, deletedBy: req.user?.name || 'Unknown' });
+    const io = req.app.get('io');
+    if (io) {
+      const routeId = student.route._id.toString();
+      io.to(routeId).emit('studentDeleted', student._id, routeId);
+    }
 
     res.status(200).json({ success: true, data: {} });
   } catch (err) {

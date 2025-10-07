@@ -1,8 +1,28 @@
 import axios from 'axios';
-
+import { io } from 'socket.io-client';
 const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 const API = axios.create({ baseURL, timeout: 15000 });
+
+// Socket.IO client initialization
+const socket = io(baseURL, {
+  autoConnect: false, // Only connect when needed
+  reconnectionAttempts: 5,
+  reconnectionDelay: 3000,
+  auth: (cb) => {
+    const userInfoString = localStorage.getItem('userInfo');
+    if (userInfoString) {
+      try {
+        const userInfo = JSON.parse(userInfoString);
+        cb({ token: userInfo.token });
+      } catch (e) {
+        cb({});
+      }
+    } else {
+      cb({});
+    }
+  },
+});
 
 // Add a request interceptor to include the token in headers
 API.interceptors.request.use(
