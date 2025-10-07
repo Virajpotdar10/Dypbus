@@ -635,3 +635,187 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =================================================================== */
+/* === NEW ADMIN UI OVERRIDE STYLES === */
+/* =================================================================== */
+
+/* --- Root Variables for Consistency --- */
+:root {
+  --admin-primary-bg: #f8f9ff;
+  --admin-header-bg: #ffffff;
+  --admin-card-bg: #ffffff;
+  --admin-text-primary: #0b1e73;
+  --admin-text-secondary: #667085;
+  --admin-font-family: 'Poppins', 'Inter', sans-serif;
+  --admin-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --admin-shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --admin-border-radius: 16px;
+  --admin-border-color: #eaecf0;
+}
+
+/* --- General Admin Body and Font --- */
+.admin-dashboard {
+  font-family: var(--admin-font-family) !important;
+  background-color: var(--admin-primary-bg) !important;
+}
+
+/* --- Admin Header Overrides --- */
+.admin-header {
+  background-color: var(--admin-header-bg) !important;
+  padding: 1.5rem 2rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-shadow: var(--admin-shadow-soft) !important;
+  border-bottom: 1px solid var(--admin-border-color) !important;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.admin-header .header-left h1 {
+  color: var(--admin-text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 1.75rem !important;
+  margin: 0 !important;
+}
+
+.admin-header .header-left p {
+  color: var(--admin-text-secondary) !important;
+  margin-top: 0.25rem !important;
+}
+
+.admin-header .header-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.admin-header .user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 50px;
+}
+
+.admin-header .user-profile:hover {
+    background-color: #f0f2ff;
+}
+
+.admin-header .user-name {
+  font-weight: 600 !important;
+  color: var(--admin-text-primary) !important;
+}
+
+/* --- Admin Content & Cards --- */
+.admin-content {
+  padding: 2rem !important;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.stats-cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+  gap: 1.5rem !important;
+}
+
+.stat-card {
+  background: var(--admin-card-bg) !important;
+  border-radius: var(--admin-border-radius) !important;
+  padding: 1.5rem !important;
+  box-shadow: var(--admin-shadow-soft) !important;
+  border: 1px solid var(--admin-border-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: var(--admin-shadow-medium) !important;
+}
+
+/* --- Table and Panel Overrides --- */
+.tab-content, .table-container {
+  border-radius: var(--admin-border-radius) !important;
+  box-shadow: var(--admin-shadow-soft) !important;
+  border: 1px solid var(--admin-border-color) !important;
+}
+
+.panel-header h2 {
+    color: var(--admin-text-primary);
+    font-weight: 600;
+}
+
+/* --- Responsive Overrides for Admin Screen --- */
+
+/* Tablet */
+@media (max-width: 992px) {
+  .admin-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .admin-header .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .admin-content {
+    padding: 1.5rem !important;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr !important; /* Stack stat cards */
+  }
+
+  .tabs-navigation {
+      flex-wrap: wrap;
+  }
+  
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .panel-header .header-actions {
+      width: 100%;
+  }
+
+  .panel-header .btn {
+      width: 100%;
+      justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+    .admin-content {
+        padding: 1rem !important;
+    }
+
+    .admin-header .header-left h1 {
+        font-size: 1.5rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .admin-header .header-left p {
+        text-align: center;
+        width: 100%;
+    }
+
+    .admin-header .header-right {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .admin-header .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

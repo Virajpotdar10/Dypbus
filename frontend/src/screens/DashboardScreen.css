@@ -1194,3 +1194,160 @@ header[style*="background-color: rgb(0, 32, 91)"] {
     flex-direction: column;
   }
 }
+/* =================================================================== */
+/* === NEW UI OVERRIDE STYLES === */
+/* =================================================================== */
+
+/* --- Root Variables for Consistency --- */
+:root {
+  --primary-bg: #f8f9ff;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
+  --text-primary: #0b1e73;
+  --text-secondary: #667085;
+  --font-family: 'Poppins', 'Inter', sans-serif;
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --border-radius: 16px;
+  --border-color: #eaecf0;
+}
+
+/* --- General Body and Font --- */
+body {
+  font-family: var(--font-family) !important;
+  background-color: var(--primary-bg) !important;
+}
+
+/* --- Header Overrides --- */
+.header {
+  background-color: var(--header-bg) !important;
+  padding: 1rem 2rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-shadow: var(--shadow-soft) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  flex-direction: row !important; /* Ensure it's a row by default */
+}
+
+.header-title {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 1.5rem !important;
+  text-align: left !important; /* Ensure left alignment */
+}
+
+.header-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+}
+
+.user-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  cursor: pointer !important;
+  padding: 0.5rem !important;
+  border-radius: 50px !important;
+  transition: all 0.3s ease !important;
+}
+
+.user-info:hover {
+  background-color: #f0f2ff !important;
+  box-shadow: 0 4px 8px rgba(26, 43, 143, 0.1) !important;
+}
+
+.user-name {
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+}
+
+.logout-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #fef3f2 !important;
+  color: #d92d20 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  cursor: pointer !important;
+  font-size: 1.2rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.logout-button:hover {
+  background-color: #d92d20 !important;
+  color: white !important;
+  transform: scale(1.1) !important;
+}
+
+/* --- Dashboard Grid and Cards Overrides --- */
+.main-content {
+  padding: 2rem !important;
+}
+
+.route-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  gap: 2rem !important;
+}
+
+.card {
+  background-color: var(--card-bg) !important;
+  border-radius: var(--border-radius) !important;
+  padding: 1.5rem !important;
+  box-shadow: var(--shadow-soft) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+.card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* --- Responsive Overrides --- */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem 1.5rem !important;
+    flex-direction: row !important; /* Keep as row */
+  }
+
+  .content-header {
+    flex-direction: column !important;
+    align-items: flex-start !important; /* Align left on tablet */
+    text-align: left !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .header {
+    flex-direction: row !important; /* Keep as row */
+    padding: 0.75rem 1rem !important;
+  }
+
+  .header-title {
+    font-size: 1.2rem !important;
+    text-align: left !important;
+  }
+
+  .user-details {
+    display: none !important; /* Hide name/role on small screens */
+  }
+
+  .content-header {
+    align-items: center !important; /* Center on mobile */
+    text-align: center !important;
+  }
+
+  .route-grid {
+    grid-template-columns: 1fr !important; /* Stack cards vertically */
+  }
+}
