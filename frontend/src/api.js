@@ -58,5 +58,5 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
+export { socket };
 export default API;
