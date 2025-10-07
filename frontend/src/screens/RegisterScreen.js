@@ -12,6 +12,7 @@ const RegisterScreen = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+
   useEffect(() => {
     if (localStorage.getItem('authToken')) {
       navigate('/');
@@ -68,7 +69,6 @@ const RegisterScreen = () => {
       }, 5000);
     }
   };
-}
 return (
   <div className="register-container">
     <div className="register-overlay"></div>
@@ -161,6 +161,6 @@ return (
     </div>
   </div>
 );
-
+};
 
 export default RegisterScreen;
