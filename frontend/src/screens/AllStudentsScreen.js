@@ -33,23 +33,7 @@ const AllStudentsScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const [driverName, setDriverName] = useState(localStorage.getItem('driverName') || '');
 
-  const [form, setForm] = useState({
-    name: '',
-    mobileNumber: '',
-    department: '',
-    Year:'',
-    feeStatus: 'Not Paid',
-    college: 'DYPCET',
-  });
-
-  const config = useMemo(() => ({
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-    },
-  }), []);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       const params = {
         page,
@@ -73,7 +57,7 @@ const AllStudentsScreen = () => {
     } catch (err) {
       toast.error('Failed to load students');
     }
-  };
+  }, [page, limit, college, feeStatus, search, sortBy, config]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -81,7 +65,8 @@ const AllStudentsScreen = () => {
     }, 300); // Debounce search input
     return () => clearTimeout(handler);
     
-  }, [page, limit, college, feeStatus, search, sortBy, config]);
+  }, [fetchStudents]);
+  
 
   useEffect(() => {
     localStorage.setItem('driverName', driverName);
