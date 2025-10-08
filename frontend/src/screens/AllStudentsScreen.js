@@ -4,6 +4,7 @@ import { FiUsers, FiSearch, FiPlus, FiFilter, FiDownload, FiChevronLeft, FiChevr
 import { toast } from 'react-toastify';
 import 'jspdf-autotable';
 import './AllStudentsScreen.css';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
 
 const COLLEGES = ['All', 'DYPCET', 'DYPSEM', 'Diploma'];
@@ -32,6 +33,22 @@ const AllStudentsScreen = () => {
   const [showSort, setShowSort] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [driverName, setDriverName] = useState(localStorage.getItem('driverName') || '');
+
+  const [form, setForm] = useState({
+    name: '',
+    mobileNumber: '',
+    department: '',
+    Year:'',
+    feeStatus: 'Not Paid',
+    college: 'DYPCET',
+  });
+
+  const config = useMemo(() => ({
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+    },
+  }), []);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -66,7 +83,7 @@ const AllStudentsScreen = () => {
     return () => clearTimeout(handler);
     
   }, [fetchStudents]);
-  
+
 
   useEffect(() => {
     localStorage.setItem('driverName', driverName);
