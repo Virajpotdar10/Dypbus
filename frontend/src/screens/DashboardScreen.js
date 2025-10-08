@@ -266,7 +266,6 @@ newSocket.on('student:deleted', (data) => {
             <div className="header-left">
               <h2 className="header-title">Bus Driver Dashboard</h2>
             </div>
-            
             <div className="header-controls">
               {user && (
                 <div className="user-info-container">
@@ -286,7 +285,7 @@ newSocket.on('student:deleted', (data) => {
                 </div>
               )}
               {user && user.role && user.role.toLowerCase() === 'admin' && (
-                <Link to="/admin" className="admin-button">
+                <Link to="/admin" className="btn-gradient-professional">
                   Admin Dashboard
                 </Link>
               )}

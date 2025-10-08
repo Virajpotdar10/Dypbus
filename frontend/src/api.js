@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
-const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const baseURL = process.env.NODE_ENV === 'production'
+  ? process.env.REACT_APP_API_URL
+  : 'http://localhost:5001'; 
 
 const API = axios.create({ baseURL, timeout: 15000 });
 

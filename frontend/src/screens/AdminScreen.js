@@ -5,15 +5,14 @@ import io from 'socket.io-client';
 import './AdminScreen.css';
 
 // Icons (assuming you're using react-icons)
-import { 
-  FiUsers, 
-  FiTruck, 
-  FiUser, 
-  FiBook, 
-  FiSearch, 
-  FiPlus, 
-  FiEdit, 
-  FiTrash2, 
+import {
+  FiUsers,
+  FiTruck,
+  FiUser,
+  FiBook,
+  FiSearch,
+  FiEdit,
+  FiTrash2,
   FiDownload,
   FiLogOut,
   FiHome,
@@ -70,29 +69,22 @@ const AdminScreen = () => {
 };
 
 const AdminHeader = ({ user, onLogout }) => (
+
   <header className="admin-header">
     <div className="header-left">
-      <h1>
-        <FiUsers className="header-icon" />
-        Admin Dashboard
-      </h1>
-      <p>Manage drivers, routes, and students</p>
+    <h1 className="header-title">
+  <FiUsers />
+  Admin Dashboard
+</h1>
     </div>
     <div className="header-right">
       <div className="user-profile">
-        <div className="user-avatar">
-          <FiUser />
-        </div>
-        <div className="user-info">
-          <span className="user-name">{user.name}</span>
-          <span className="user-role">{user.role}</span>
-        </div>
+        <button onClick={() => window.location.href = '/'} className="btn btn-driver-view">
+          <FiHome /> Driver View
+        </button>
       </div>
-      <button onClick={() => window.location.href = '/'} className="btn btn-secondary">
-        <FiHome /> Driver View
-      </button>
-      <button onClick={onLogout} className="btn btn-danger">
-        <FiLogOut /> Logout
+      <button onClick={onLogout} className="btn-logout">
+        <FiLogOut /> Log out
       </button>
     </div>
   </header>
@@ -112,13 +104,13 @@ const AdminTabs = () => {
         API.get('/api/v1/routes'),
         API.get('/api/v1/students?page=1&limit=1000'),
       ]);
-      
+
       const newData = {
         drivers: driversRes.data.data || [],
         routes: routesRes.data.data || [],
         students: studentsRes.data.data || [],
       };
-      
+
       setData(newData);
       setStats({
         drivers: newData.drivers.length,
@@ -144,17 +136,17 @@ const AdminTabs = () => {
         setStats(prev => ({ ...prev, drivers: prev.drivers + 1 }));
       });
       socket.on('driver:updated', (updatedItem) => {
-        setData(prev => ({ 
-          ...prev, 
-          drivers: prev.drivers.map(item => 
+        setData(prev => ({
+          ...prev,
+          drivers: prev.drivers.map(item =>
             item._id === updatedItem.driver._id ? updatedItem.driver : item
-          ) 
+          )
         }));
       });
       socket.on('driver:deleted', (deletedItem) => {
-        setData(prev => ({ 
-          ...prev, 
-          drivers: prev.drivers.filter(item => item._id !== deletedItem.driverId) 
+        setData(prev => ({
+          ...prev,
+          drivers: prev.drivers.filter(item => item._id !== deletedItem.driverId)
         }));
         setStats(prev => ({ ...prev, drivers: prev.drivers - 1 }));
       });
@@ -165,17 +157,17 @@ const AdminTabs = () => {
         setStats(prev => ({ ...prev, routes: prev.routes + 1 }));
       });
       socket.on('route:updated', (updatedItem) => {
-        setData(prev => ({ 
-          ...prev, 
-          routes: prev.routes.map(item => 
+        setData(prev => ({
+          ...prev,
+          routes: prev.routes.map(item =>
             item._id === updatedItem.route._id ? updatedItem.route : item
-          ) 
+          )
         }));
       });
       socket.on('route:deleted', (deletedItem) => {
-        setData(prev => ({ 
-          ...prev, 
-          routes: prev.routes.filter(item => item._id !== deletedItem.routeId) 
+        setData(prev => ({
+          ...prev,
+          routes: prev.routes.filter(item => item._id !== deletedItem.routeId)
         }));
         setStats(prev => ({ ...prev, routes: prev.routes - 1 }));
       });
@@ -186,17 +178,17 @@ const AdminTabs = () => {
         setStats(prev => ({ ...prev, students: prev.students + 1 }));
       });
       socket.on('student:updated', (updatedItem) => {
-        setData(prev => ({ 
-          ...prev, 
-          students: prev.students.map(item => 
+        setData(prev => ({
+          ...prev,
+          students: prev.students.map(item =>
             item._id === updatedItem.student._id ? updatedItem.student : item
-          ) 
+          )
         }));
       });
       socket.on('student:deleted', (deletedItem) => {
-        setData(prev => ({ 
-          ...prev, 
-          students: prev.students.filter(item => item._id !== deletedItem.studentId) 
+        setData(prev => ({
+          ...prev,
+          students: prev.students.filter(item => item._id !== deletedItem.studentId)
         }));
         setStats(prev => ({ ...prev, students: prev.students - 1 }));
       });
@@ -210,53 +202,53 @@ const AdminTabs = () => {
   return (
     <div className="admin-tabs-container">
       <div className="stats-cards">
-        <StatCard 
-          title="Drivers" 
-          count={stats.drivers} 
-          icon={<FiUser />} 
-          color="#4f46e5" 
+        <StatCard
+          title="Drivers"
+          count={stats.drivers}
+          icon={<FiUser />}
+          color="#4f46e5"
           onClick={() => setActiveTab('drivers')}
         />
-        <StatCard 
-          title="Routes" 
-          count={stats.routes} 
-          icon={<FiTruck />} 
-          color="#10b981" 
+        <StatCard
+          title="Routes"
+          count={stats.routes}
+          icon={<FiTruck />}
+          color="#10b981"
           onClick={() => setActiveTab('routes')}
         />
-        <StatCard 
-          title="Students" 
-          count={stats.students} 
-          icon={<FiBook />} 
-          color="#f59e0b" 
+        <StatCard
+          title="Students"
+          count={stats.students}
+          icon={<FiBook />}
+          color="#f59e0b"
           onClick={() => setActiveTab('students')}
         />
       </div>
-      
+
       <div className="tabs-navigation">
-        <TabButton 
-          name="drivers" 
-          count={stats.drivers} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
+        <TabButton
+          name="drivers"
+          count={stats.drivers}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           icon={<FiUser />}
         />
-        <TabButton 
-          name="routes" 
-          count={stats.routes} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
+        <TabButton
+          name="routes"
+          count={stats.routes}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           icon={<FiTruck />}
         />
-        <TabButton 
-          name="students" 
-          count={stats.students} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
+        <TabButton
+          name="students"
+          count={stats.students}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           icon={<FiBook />}
         />
       </div>
-      
+
       <div className="tab-content">
         {loading ? (
           <div className="loading-container">
@@ -268,7 +260,7 @@ const AdminTabs = () => {
             {activeTab === 'drivers' && <DriversTab drivers={data.drivers} fetchData={fetchData} />}
             {activeTab === 'routes' && <RoutesTab routes={data.routes} drivers={data.drivers} fetchData={fetchData} />}
             {activeTab === 'students' && <StudentsTab students={data.students} routes={data.routes} fetchData={fetchData} />}
-          </> 
+          </>
         )}
       </div>
     </div>
@@ -288,7 +280,7 @@ const StatCard = ({ title, count, icon, color, onClick }) => (
 );
 
 const TabButton = ({ name, count, activeTab, setActiveTab, icon }) => (
-  <button 
+  <button
     className={`tab-btn ${activeTab === name ? 'active' : ''}`}
     onClick={() => setActiveTab(name)}
   >
@@ -336,16 +328,16 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
   };
 
   const handleOpenModal = (student = null) => {
-    const initialFormData = { 
-      name: '', 
-      mobileNumber: '', 
-      department: '', 
-      stop: '', 
-      feeStatus: 'Not Paid', 
-      college: 'DYPCET', 
-      route: '' 
+    const initialFormData = {
+      name: '',
+      mobileNumber: '',
+      department: '',
+      stop: '',
+      feeStatus: 'Not Paid',
+      college: 'DYPCET',
+      route: ''
     };
-    
+
     if (student) {
       setEditingStudent(student);
       setFormData({ ...initialFormData, ...student, route: student.route?._id || '' });
@@ -409,26 +401,23 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
           <button onClick={handleDownloadPdf} className="btn btn-secondary">
             <FiDownload /> Export PDF
           </button>
-          <button onClick={() => handleOpenModal()} className="btn btn-primary">
-            <FiPlus /> Add Student
-          </button>
         </div>
       </div>
 
       <div className="panel-filters">
         <div className="search-box">
           <FiSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search by name, department, or mobile..." 
-            value={filters.search} 
-            onChange={handleSearchChange} 
+          <input
+            type="text"
+            placeholder="Search by name, department, or mobile..."
+            value={filters.search}
+            onChange={handleSearchChange}
           />
         </div>
-        
+
         <div className="filter-buttons">
           {['All', 'DYPCET', 'DYPSEM', 'Diploma'].map(college => (
-            <button 
+            <button
               key={college}
               className={`filter-btn ${filters.college === college ? 'active' : ''}`}
               onClick={() => handleFilterChange(college)}
@@ -488,7 +477,7 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
             ))}
           </tbody>
         </table>
-        
+
         {students.length === 0 && (
           <div className="empty-state">
             <FiUser size={48} />
@@ -500,8 +489,8 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
 
       {pagination.totalPages > 1 && (
         <div className="pagination">
-          <button 
-            onClick={() => setCurrentPage(p => p - 1)} 
+          <button
+            onClick={() => setCurrentPage(p => p - 1)}
             disabled={!pagination.hasPrevPage}
             className="pagination-btn"
           >
@@ -510,8 +499,8 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
           <span className="pagination-info">
             Page {pagination.page} of {pagination.totalPages}
           </span>
-          <button 
-            onClick={() => setCurrentPage(p => p + 1)} 
+          <button
+            onClick={() => setCurrentPage(p => p + 1)}
             disabled={!pagination.hasNextPage}
             className="pagination-btn"
           >
@@ -521,13 +510,13 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
       )}
 
       {isModalOpen && (
-        <StudentFormModal 
-          routes={routes} 
-          formData={formData} 
-          setFormData={setFormData} 
-          handleSubmit={handleSubmit} 
-          handleCloseModal={handleCloseModal} 
-          editingStudent={editingStudent} 
+        <StudentFormModal
+          routes={routes}
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          handleCloseModal={handleCloseModal}
+          editingStudent={editingStudent}
         />
       )}
     </div>
@@ -543,64 +532,64 @@ const StudentFormModal = ({ routes, formData, setFormData, handleSubmit, handleC
           <FiX />
         </button>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="modal-form">
         <div className="form-grid">
           <div className="form-group">
             <label>Full Name</label>
-            <input 
-              type="text" 
-              value={formData.name || ''} 
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-              required 
+            <input
+              type="text"
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Mobile Number</label>
-            <input 
-              type="text" 
-              value={formData.mobileNumber || ''} 
-              onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })} 
-              required 
+            <input
+              type="text"
+              value={formData.mobileNumber || ''}
+              onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+              required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Department</label>
-            <input 
-              type="text" 
-              value={formData.department || ''} 
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })} 
-              required 
+            <input
+              type="text"
+              value={formData.department || ''}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Bus Stop</label>
-            <input 
-              type="text" 
-              value={formData.stop || ''} 
-              onChange={(e) => setFormData({ ...formData, stop: e.target.value })} 
-              required 
+            <input
+              type="text"
+              value={formData.stop || ''}
+              onChange={(e) => setFormData({ ...formData, stop: e.target.value })}
+              required
             />
           </div>
-          
+
           <div className="form-group">
             <label>Fee Status</label>
-            <select 
-              value={formData.feeStatus || 'Not Paid'} 
+            <select
+              value={formData.feeStatus || 'Not Paid'}
               onChange={(e) => setFormData({ ...formData, feeStatus: e.target.value })}
             >
               <option value="Not Paid">Not Paid</option>
               <option value="Paid">Paid</option>
             </select>
           </div>
-          
+
           <div className="form-group">
             <label>College</label>
-            <select 
-              value={formData.college || 'DYPCET'} 
+            <select
+              value={formData.college || 'DYPCET'}
               onChange={(e) => setFormData({ ...formData, college: e.target.value })}
             >
               <option value="DYPCET">DYPCET</option>
@@ -608,12 +597,12 @@ const StudentFormModal = ({ routes, formData, setFormData, handleSubmit, handleC
               <option value="Diploma">Diploma</option>
             </select>
           </div>
-          
+
           <div className="form-group full-width">
             <label>Assign Route</label>
-            <select 
-              value={formData.route || ''} 
-              onChange={(e) => setFormData({ ...formData, route: e.target.value })} 
+            <select
+              value={formData.route || ''}
+              onChange={(e) => setFormData({ ...formData, route: e.target.value })}
               required
             >
               <option value="">Select a Route</option>
@@ -625,7 +614,7 @@ const StudentFormModal = ({ routes, formData, setFormData, handleSubmit, handleC
             </select>
           </div>
         </div>
-        
+
         <div className="modal-actions">
           <button type="button" onClick={handleCloseModal} className="btn btn-secondary">
             Cancel
@@ -736,13 +725,13 @@ const RoutesTab = ({ routes, drivers, fetchData }) => {
       </div>
 
       {isModalOpen && (
-        <RouteFormModal 
+        <RouteFormModal
           drivers={drivers}
-          formData={formData} 
-          setFormData={setFormData} 
-          handleSubmit={handleSubmit} 
-          handleCloseModal={handleCloseModal} 
-          editingRoute={editingRoute} 
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          handleCloseModal={handleCloseModal}
+          editingRoute={editingRoute}
         />
       )}
     </div>
@@ -760,16 +749,16 @@ const RouteFormModal = ({ drivers, formData, setFormData, handleSubmit, handleCl
         <div className="form-grid">
           <div className="form-group full-width">
             <label>Route Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={formData.routeName}
               onChange={(e) => setFormData({ ...formData, routeName: e.target.value })}
-              required 
+              required
             />
           </div>
           <div className="form-group full-width">
             <label>Assign Driver</label>
-            <select 
+            <select
               value={formData.driver}
               onChange={(e) => setFormData({ ...formData, driver: e.target.value })}
               required
@@ -854,9 +843,6 @@ const DriversTab = ({ drivers, fetchData }) => {
       <div className="panel-header">
         <h2>Drivers Management</h2>
         <div className="header-actions">
-          <button onClick={() => handleOpenModal()} className="btn btn-primary">
-            <FiPlus /> Add Driver
-          </button>
         </div>
       </div>
 
@@ -904,12 +890,12 @@ const DriversTab = ({ drivers, fetchData }) => {
       </div>
 
       {isModalOpen && (
-        <DriverFormModal 
-          formData={formData} 
-          setFormData={setFormData} 
-          handleSubmit={handleSubmit} 
-          handleCloseModal={handleCloseModal} 
-          editingDriver={editingDriver} 
+        <DriverFormModal
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          handleCloseModal={handleCloseModal}
+          editingDriver={editingDriver}
         />
       )}
     </div>

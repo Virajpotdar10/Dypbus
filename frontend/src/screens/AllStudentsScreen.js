@@ -80,7 +80,7 @@ const AllStudentsScreen = () => {
       fetchStudents();
     }, 300); // Debounce search input
     return () => clearTimeout(handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [page, limit, college, feeStatus, search, sortBy, config]);
 
   useEffect(() => {
@@ -96,8 +96,6 @@ const AllStudentsScreen = () => {
   // Dashboard totals across ALL students
   const byCollege = useMemo(() => {
     const map = { DYPCET: { total: 0, paid: 0, notPaid: 0 }, DYPSEM: { total: 0, paid: 0, notPaid: 0 }, Diploma: { total: 0, paid: 0, notPaid: 0 } };
-    // This is now a rough client-side estimate. For accuracy, this should come from the backend.
-    // For now, we'll leave it as is, but a dedicated stats endpoint would be better.
     students.forEach(s => {
       if (!map[s.college]) return;
       map[s.college].total++;
