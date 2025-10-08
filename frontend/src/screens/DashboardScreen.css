@@ -1237,7 +1237,7 @@ header[style*="background-color: rgb(0, 32, 91)"] {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     flex-direction: column; gap: 1rem; padding: 1rem; 
   }
-  .header-controls { flex-wrap: wrap; justify-content: center; }  */
+  .header-controls { flex-wrap: wrap; justify-content: center; }  
 
   /* Title and top section */
   .content-header {
