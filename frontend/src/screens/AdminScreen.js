@@ -16,7 +16,8 @@ import {
   FiDownload,
   FiLogOut,
   FiHome,
-  FiX
+  FiX,
+  FiUserPlus
 } from 'react-icons/fi';
 
 const AdminScreen = () => {
@@ -72,10 +73,10 @@ const AdminHeader = ({ user, onLogout }) => (
 
   <header className="admin-header">
     <div className="header-left">
-    <h1 className="header-title">
-  <FiUsers />
-  Admin Dashboard
-</h1>
+      <h1 className="header-title">
+        <FiUsers />
+        Admin Dashboard
+      </h1>
     </div>
     <div className="header-right">
       <div className="user-profile">
@@ -195,7 +196,6 @@ const AdminTabs = () => {
     };
 
     setupSocketListeners();
-
     return () => socket.disconnect();
   }, [fetchData]);
 
@@ -786,6 +786,7 @@ const DriversTab = ({ drivers, fetchData }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'driver' });
+  const[driverToDelete, setDriverToDelete] = useState(null);
 
   const handleOpenModal = (driver = null) => {
     if (driver) {
@@ -837,12 +838,26 @@ const DriversTab = ({ drivers, fetchData }) => {
       }
     }
   };
-
+const confirmDelete = async () => {
+  if (!driverToDelete) return;
+  try {
+    await API.delete(`/api/v1/users/${driverToDelete._id}`);
+    fetchData();
+    setDriverToDelete(null); // Close the modal on success
+  } catch (error) {
+    console.error('Failed to delete driver', error);
+    alert(`Error: Could not delete driver.`);
+  }
+};
   return (
     <div className="tab-panel">
       <div className="panel-header">
+
         <h2>Drivers Management</h2>
         <div className="header-actions">
+          <button onClick={() => handleOpenModal()} className="btn btn-primary">
+            <FiUserPlus /> Add User
+          </button>
         </div>
       </div>
 
@@ -853,7 +868,6 @@ const DriversTab = ({ drivers, fetchData }) => {
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Created At</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -865,15 +879,14 @@ const DriversTab = ({ drivers, fetchData }) => {
                 <td>
                   <span className={`role-badge ${driver.role}`}>{driver.role}</span>
                 </td>
-                <td>{new Date(driver.createdAt).toLocaleDateString()}</td>
                 <td>
                   <div className="action-buttons">
-                    <button onClick={() => handleOpenModal(driver)} className="btn-icon btn-edit" title="Edit">
-                      <FiEdit />
+                    <button onClick={() => handleOpenModal(driver)} className="btn btn-secondary btn-sm" title="Edit">
+                      <FiEdit /> Edit
                     </button>
-                    <button onClick={() => handleDelete(driver._id)} className="btn-icon btn-delete" title="Delete">
-                      <FiTrash2 />
-                    </button>
+                    <button onClick={() => setDriverToDelete(driver)} className="btn btn-danger btn-sm" title="Delete">
+  <FiTrash2 /> Delete
+</button>
                   </div>
                 </td>
               </tr>
@@ -898,9 +911,33 @@ const DriversTab = ({ drivers, fetchData }) => {
           editingDriver={editingDriver}
         />
       )}
-    </div>
-  );
+  {driverToDelete && (
+    <DeleteConfirmationModal
+      driverName={driverToDelete.name}
+      onConfirm={confirmDelete}
+      onCancel={() => setDriverToDelete(null)}
+    />
+  )}
+</div>
+);
 };
+ const DeleteConfirmationModal = ({ driverName, onConfirm, onCancel }) => (
+  <div className="modal-overlay">
+    <div className="modal" style={{ maxWidth: '400px' }}>
+      <div className="modal-header">
+        <h3>Confirm Deletion</h3>
+        <button onClick={onCancel} className="modal-close"><FiX /></button>
+      </div>
+      <div className="modal-body" style={{ padding: '1.5rem' }}>
+        <p>Are you sure you want to remove <strong>{driverName}</strong>? This action cannot be undone.</p>
+      </div>
+      <div className="modal-actions">
+        <button type="button" onClick={onCancel} className="btn btn-secondary">No, Cancel</button>
+        <button type="button" onClick={onConfirm} className="btn btn-danger">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+);
 
 // ADD this new component right below the DriversTab component
 const DriverFormModal = ({ formData, setFormData, handleSubmit, handleCloseModal, editingDriver }) => (

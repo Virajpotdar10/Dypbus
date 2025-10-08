@@ -13,9 +13,6 @@ const emitStudentEvent = (req, eventType, data) => {
   }
 };
 
-// @desc    Get all students for a specific route with pagination and filtering
-// @route   GET /api/v1/routes/:routeId/students
-// @access  Private
 exports.getStudents = async (req, res, next) => {
   console.log('--- DEBUG: getStudents ---');
   try {

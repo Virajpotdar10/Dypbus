@@ -36,9 +36,6 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   res.status(200).json({ success: true, data: user });
 });
 
-// @desc    Update user (admin or self)
-// @route   PUT /api/v1/users/:id
-// @access  Private
 exports.updateUser = asyncHandler(async (req, res, next) => {
   try {
     let user = await Driver.findById(req.params.id);
@@ -47,52 +44,61 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
     }
     
-    // Only admin or the user themselves can update
-    if (req.user.role !== 'admin' && user._id.toString() !== req.user.id) {
+     // Only admin or the user themselves can update
+     if (req.user.role.toLowerCase() !== 'admin' && user._id.toString() !== req.user.id) {
       return next(new ErrorResponse('Not authorized to update this user', 403));
     }
     
     // Only admin can change roles
     if (req.body.role && req.user.role !== 'admin') {
+
       return next(new ErrorResponse('Not authorized to change user role', 403));
     }
-    
-    // Update user
-    user = await Driver.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    }).select('-password');
-    
+
+    // Manually update fields
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    if (req.body.role) {
+      user.role = req.body.role;
+    }
+    // Only set password if it is being updated
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    await user.save();
+
+
+    // Exclude password from the response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
     invalidateCache.drivers(req.params.id);
 
     // Emit real-time event
-    emitDriverEvent(req, 'updated', { driver: user, updatedBy: req.user.name });
-    
-    res.status(200).json({ success: true, data: user });
-  } catch (err) {
+    emitDriverEvent(req, 'updated', { driver: userResponse, updatedBy: req.user.name });
+
+    res.status(200).json({ success: true, data: userResponse });
+  } 
+  catch (err) {
     next(err);
   }
 });
 
-// @desc    Delete user (admin only)
-// @route   DELETE /api/v1/users/:id
-// @access  Private/Admin
 exports.deleteUser = asyncHandler(async (req, res, next) => {
   try {
     const user = await Driver.findById(req.params.id);
-    
     if (!user) {
       return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
     }
-    
     // Prevent deleting self
     if (user._id.toString() === req.user.id) {
       return next(new ErrorResponse('Cannot delete your own account', 400));
     }
     
-    await user.remove();
+    await Driver.findByIdAndDelete(req.params.id);
     
-    invalidateCache.drivers(req.params.id);
+    invalidateCache.drivers(req.params.id)
 
     // Emit real-time event
     emitDriverEvent(req, 'deleted', { driverId: req.params.id, deletedBy: req.user.name });
