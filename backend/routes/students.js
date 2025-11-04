@@ -11,6 +11,7 @@ const {
   listStudents,
   createStudent,
   resetFeesForRoute,
+   createPublicStudent,
 } = require('../controllers/students');
 
 const router = express.Router({ mergeParams: true });
@@ -18,7 +19,7 @@ const router = express.Router({ mergeParams: true });
 const { protect, admin } = require('../middleware/auth');
 const { cacheStudents } = require('../middleware/cache');
 
-router.route('/').get(protect, getStudents).post(protect, addStudent);
+router.route('/').get(protect, getStudents).post(createPublicStudent);
 router.get('/export.csv', protect, exportStudentsCSVForRoute);
 router.get('/export.pdf', protect, exportStudentsPDFForRoute);
 router.post('/reset-fees', protect, resetFeesForRoute);

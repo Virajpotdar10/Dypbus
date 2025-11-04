@@ -663,3 +663,69 @@ exports.resetFeesForRoute = async (req, res) => {
     res.status(500).json({ success: false, msg: 'Server error while resetting fees.' });
   }
 };
+exports.createPublicStudent = async (req, res, next) => {
+  try {
+    const { routeId } = req.params;
+    const { name, mobileNumber, parentMobileNumber, department, stop, college, year } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(routeId)) {
+      return res.status(400).json({ success: false, msg: 'Invalid route id' });
+    }
+
+    if (!name || !department || !stop || !year) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Please provide all required fields: name, department, stop, and year'
+      });
+    }
+
+    const route = await Route.findById(routeId);
+    if (!route) {
+      return res.status(404).json({ success: false, msg: 'Route not found' });
+    }
+
+    if (mobileNumber && mobileNumber.trim() !== '') {
+      const existingStudent = await Student.findOne({ mobileNumber });
+      if (existingStudent) {
+        return res.status(400).json({
+          success: false,
+          msg: 'A student with this mobile number already exists.'
+        });
+      }
+    }
+
+    const newStudent = await Student.create({
+      name,
+      mobileNumber,
+      parentMobileNumber,
+      department,
+      year,
+      stop,
+      college: college || 'DYPCET',
+      feeStatus: 'Not Paid',
+      route: routeId
+    });
+
+    invalidateCache.students(routeId);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(routeId).emit('studentAdded', newStudent);
+    }
+
+    res.status(201).json({ success: true, data: newStudent });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        msg: 'A student with this mobile number already exists.'
+      });
+    }
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(e => e.message);
+      return res.status(400).json({ success: false, msg: errors.join(', ') });
+    }
+    console.error('Error in public student creation:', err);
+    res.status(500).json({ success: false, msg: 'Server error during registration.' });
+  }
+};

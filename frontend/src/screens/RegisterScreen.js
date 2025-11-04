@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import API from '../api';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from './168.jpg';   
@@ -12,12 +12,6 @@ const RegisterScreen = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-
-  useEffect(() => {
-    if (localStorage.getItem('authToken')) {
-      navigate('/');
-    }
-  }, [navigate]);
 
   const registerHandler = async (e) => {
     e.preventDefault();

@@ -19,6 +19,6 @@ const { cacheRoutes } = require('../middleware/cache');
 router.use('/:routeId/students', protect, studentRoutes.router);
 
 router.route('/').get(protect, cacheRoutes, getRoutes).post(protect, createRoute);
-router.route('/:id').get(protect, getRoute).put(protect, updateRoute).delete(protect, deleteRoute);
+router.route('/:id').get(getRoute).put(protect, updateRoute).delete(protect, deleteRoute);
 
 module.exports = router;

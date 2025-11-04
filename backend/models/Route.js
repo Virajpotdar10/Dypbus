@@ -13,7 +13,7 @@ const RouteSchema = new mongoose.Schema({
   },
   capacity: {
     type: Number,
-    default: 40,
+    default: 70,
   },
   driver: {
     type: mongoose.Schema.ObjectId,

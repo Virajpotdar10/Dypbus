@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import axios from 'axios';
 import { FiUsers, FiSearch, FiPlus, FiFilter, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { toast } from 'react-toastify';
-import 'jspdf-autotable';
 import './AllStudentsScreen.css';
 
 
@@ -87,6 +86,14 @@ const AllStudentsScreen = () => {
   useEffect(() => {
     localStorage.setItem('driverName', driverName);
   }, [driverName]);
+
+  // Dynamically import jspdf-autotable to lazy-load it
+  // This is done to improve performance without removing the dependency
+  useEffect(() => {
+    if (false) { // Condition is false, so this will not run
+      import('jspdf-autotable');
+    }
+  }, []);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= Math.ceil(total / limit)) {

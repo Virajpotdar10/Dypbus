@@ -279,17 +279,18 @@ const DashboardScreen = () => {
                     <span className="user-role">{user.role}</span>
                   </div>
                 </div>
+                 {user?.role?.toLowerCase() === 'admin' && (
+              <Link to="/admin" className="btn-gradient-professional">
+                Admin Dashboard
+              </Link>
+            )}
                 <button onClick={logoutHandler} className="logout-button">
                   <FiLogOut />
                   <span>Logout</span>
                 </button>
               </div>
             )}
-            {user?.role?.toLowerCase() === 'admin' && (
-              <Link to="/admin" className="btn-gradient-professional">
-                Admin Dashboard
-              </Link>
-            )}
+    
           </div>
         </header>
 
