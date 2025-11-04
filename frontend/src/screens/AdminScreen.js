@@ -296,12 +296,11 @@ const StudentsTab = ({ students, routes, fetchData }) => {
   };
   const handleDelete = async (studentId) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
-      try {
-        await API.delete(`/api/v1/students/${studentId}`);
-        fetchData();
-      } catch (error) {
-        console.error('Failed to delete student', error);
-      }
+       try {
+    await API.delete(`/api/v1/students/${studentId}`);
+  } catch (error) {
+    console.error('Failed to delete student', error);
+  }
     }
   };
   const handleResetFees = async () => {

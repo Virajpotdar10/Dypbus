@@ -312,24 +312,29 @@ exports.deleteStudent = async (req, res, next) => {
 
     // Check authorization
     const isAdminDelete = ((req.user?.role) ? String(req.user.role) : '').toLowerCase() === 'admin';
-    if (student.route.driver.toString() !== req.user?._id?.toString() && !isAdminDelete) {
-      return res.status(401).json({ success: false, msg: 'Not authorized to delete this student' });
-    }
+  // If the student is assigned to a route, perform authorization and cache invalidation
+if (student.route) {
+  if (student.route.driver.toString() !== req.user?._id?.toString() && !isAdminDelete) {
+    return res.status(401).json({ success: false, msg: 'Not authorized to delete this student' });
+  }
+  // Invalidate cache for the specific route
+  invalidateCache.students(student.route._id);
+} else {
+  // If no route, only an admin can delete, which is already checked by the route middleware
+  // No cache to invalidate if there's no route
+}
 
-    await Student.findByIdAndDelete(req.params.id);
+await Student.findByIdAndDelete(req.params.id);
 
-    // Invalidate cache
-    invalidateCache.students(student.route._id);
-
-    // Emit real-time event to all connected clients
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('student:deleted', { 
-        studentId: req.params.id,
-        routeId: student.route._id,
-        deletedBy: req.user?.name || 'System'
-      });
-    }
+// Emit real-time event to all connected clients
+const io = req.app.get('io');
+if (io) {
+  io.emit('student:deleted', { 
+    studentId: req.params.id,
+    routeId: student.route ? student.route._id : null, // Safely access routeId
+    deletedBy: req.user?.name || 'System'
+  });
+}
 
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
