@@ -30,7 +30,7 @@ const DashboardScreen = () => {
   const [loading, setLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
   // eslint-disable-next-line no-unused-vars
-const [socket, setSocket] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   const navigate = useNavigate();
 
@@ -75,11 +75,11 @@ const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     if (!user) return;
-  
-    const socketURL = process.env.NODE_ENV === 'production' 
-      ? process.env.REACT_APP_API_URL 
+
+    const socketURL = process.env.NODE_ENV === 'production'
+      ? process.env.REACT_APP_API_URL
       : 'http://localhost:5001';
-  
+
     // Create and store the socket instance
     const newSocket = io(socketURL, {
       transports: ['websocket', 'polling'],
@@ -88,45 +88,42 @@ const [socket, setSocket] = useState(null);
       reconnectionDelay: 500,
       withCredentials: true,
     });
-  
+
     setSocket(newSocket);
-  
+
     // Listen for 'connect' event
     newSocket.on('connect', () => {
       console.log('Socket.IO connected successfully!');
     });
-  
-// Route events
-newSocket.on('route:created', ({ route }) => {
-  setRoutes(prev => {
-    if (prev.some(r => r._id === route._id)) return prev;
-    return [...prev, route];
-  });
-});
 
-newSocket.on('route:updated', ({ route }) => {
-  setRoutes(prev => prev.map(r => (r._id === route._id ? route : r)));
-});
+    // Route events
+    newSocket.on('route:created', ({ route }) => {
+      setRoutes(prev => {
+        if (prev.some(r => r._id === route._id)) return prev;
+        return [...prev, route];
+      });
+    });
 
-newSocket.on('route:deleted', ({ routeId }) => {
-  setRoutes(prev => prev.filter(r => r._id !== routeId));
-});
+    newSocket.on('route:updated', ({ route }) => {
+      setRoutes(prev => prev.map(r => (r._id === route._id ? route : r)));
+    });
 
-// Student events (optional on dashboard, but useful if you surface counts)
-newSocket.on('student:created', (data) => {
-  // Optionally refetch route list or update counters if you show them here
-  // console.log('student:created', data);
-});
+    newSocket.on('route:deleted', ({ routeId }) => {
+      setRoutes(prev => prev.filter(r => r._id !== routeId));
+    });
 
-newSocket.on('student:updated', (data) => {
-  // console.log('student:updated', data);
-});
+    // Student events (optional on dashboard, but useful if you surface counts)
+    newSocket.on('student:created', (data) => {
 
-newSocket.on('student:deleted', (data) => {
-  // console.log('student:deleted', data);
-});
-  
-    // Clean up the connection when the component unmounts
+    });
+
+    newSocket.on('student:updated', (data) => {
+    });
+
+    newSocket.on('student:deleted', (data) => {
+
+    });
+
     return () => {
       newSocket.disconnect();
     };
@@ -144,10 +141,16 @@ newSocket.on('student:deleted', (data) => {
     try {
       const trimmedName = routeName.trim();
       const routeNoPart = routeNumber ? ` (Route ${routeNumber})` : '';
-      const busNoPart = busNumberDigits ? ` - Bus MH09 ${busNumberDigits}` : '';
-      const finalName = `${trimmedName}${routeNoPart}${busNoPart}`;
+      const finalName = `${trimmedName}${routeNoPart}`;
 
-      const body = { routeName: finalName };
+      // Construct the full bus number
+      const busNumber = busNumberDigits ? `MH09${busNumberDigits}` : '';
+
+      const body = {
+        routeName: finalName,
+        busNumber: busNumber // Add busNumber to the request body
+      };
+
       if (user?.role && user.role.toLowerCase() === 'admin' && selectedDriverId) {
         body.driver = selectedDriverId;
       }
@@ -166,6 +169,7 @@ newSocket.on('student:deleted', (data) => {
       setSuccess('Route added successfully!');
     } catch (error) {
       console.error('Error adding route:', error.response?.data || error.message);
+      // Use the specific error message from the backend for the notification
       setError(error.response?.data?.msg || 'Could not add route');
       setTimeout(() => setError(''), 5000);
     }
@@ -201,7 +205,7 @@ newSocket.on('student:deleted', (data) => {
   const downloadPDF = async (routeId) => {
     try {
       const response = await API.get(`/api/v1/pdf/route/${routeId}`, { responseType: 'blob' });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -259,116 +263,109 @@ newSocket.on('student:deleted', (data) => {
   return (
     <div className="page">
       {loading && <div className="loading-screen">Loading...</div>}
-      {!dataLoaded && !loading && <div className="error-screen">Failed to load data</div>}
-      {dataLoaded && (
-        <div>
-         <header className="header">
-            <div className="header-left">
-              <h2 className="header-title">Bus Driver Dashboard</h2>
-            </div>
-            <div className="header-controls">
-              {user && (
-                <div className="user-info-container">
-                  <div className="user-info" onClick={() => { setDrawerOpen(true); setActiveSection('profile'); }}>
-                    <div className="user-avatar">
-                      <FiUser />
-                    </div>
-                    <div className="user-details">
-                      <span className="user-name">{user.name}</span>
-                      <span className="user-role">{user.role}</span>
-                    </div>
+
+      <div style={{ visibility: !loading && dataLoaded ? 'visible' : 'hidden' }}>
+        <header className="header">
+          <div className="header-left">
+            <h2 className="header-title">Bus Driver Dashboard</h2>
+          </div>
+          <div className="header-controls">
+            {user && (
+              <div className="user-info-container">
+                <div className="user-info" onClick={() => { setDrawerOpen(true); setActiveSection('profile'); }}>
+                  <div className="user-avatar"><FiUser /></div>
+                  <div className="user-details">
+                    <span className="user-name">{user.name}</span>
+                    <span className="user-role">{user.role}</span>
                   </div>
-                  <button onClick={logoutHandler} className="logout-button">
-                    <FiLogOut />
-                    <span>Logout</span>
+                </div>
+                <button onClick={logoutHandler} className="logout-button">
+                  <FiLogOut />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+            {user?.role?.toLowerCase() === 'admin' && (
+              <Link to="/admin" className="btn-gradient-professional">
+                Admin Dashboard
+              </Link>
+            )}
+          </div>
+        </header>
+
+        <div className="main-container">
+          <main className="main-content">
+            <ErrorDisplay error={error} />
+            <SuccessDisplay success={success || passwordChangeSuccess || profileUpdateSuccess} />
+
+            {activeTab === 'routes' && (
+              <>
+                <div className="content-header">
+                  <h3>My Bus Routes</h3>
+                  <button onClick={() => setShowAddRouteModal(true)} className="primary-button">
+                    <FiPlus /> Add Route
                   </button>
                 </div>
-              )}
-              {user && user.role && user.role.toLowerCase() === 'admin' && (
-                <Link to="/admin" className="btn-gradient-professional">
-                  Admin Dashboard
-                </Link>
-              )}
-            </div>
-          </header>
-
-          <div className="main-container">
-            <main className="main-content">
-              <ErrorDisplay error={error} />
-              <SuccessDisplay success={success || passwordChangeSuccess || profileUpdateSuccess} />
-
-              {activeTab === 'routes' && (
-                <>
-                  <div className="content-header">
-                    <h3>My Bus Routes</h3>
-                    <button onClick={() => setShowAddRouteModal(true)} className="primary-button">
-                      <FiPlus /> Add Route
-                    </button>
-                  </div>
-
-                  <div className="route-grid">
-                    {routes.map((route) => (
-                      <RouteCard key={route._id} route={route} onOpenDeleteModal={openDeleteModal} userRole={user?.role} onDownloadPDF={downloadPDF} />
-                    ))}
-                  </div>
-                </>
-              )}
-            </main>
-          </div>
-
-          <AddRouteModal 
-            show={showAddRouteModal}
-            onClose={() => setShowAddRouteModal(false)}
-            onAddRoute={addRouteHandler} 
-            routeName={routeName} 
-            setRouteName={setRouteName} 
-            userRole={user?.role}
-            drivers={drivers}
-            selectedDriverId={selectedDriverId}
-            setSelectedDriverId={setSelectedDriverId}
-            busNumberDigits={busNumberDigits}
-            setBusNumberDigits={(val) => {
-              const cleaned = String(val).replace(/[^a-zA-Z0-9]/g, '');
-              setBusNumberDigits(cleaned);
-            }}
-            routeNumber={routeNumber}
-            setRouteNumber={(val) => {
-              const cleaned = String(val).replace(/\D/g, '').slice(0, 3);
-              setRouteNumber(cleaned);
-            }}
-          />
-                  <DeleteRouteModal 
-            show={showDeleteModal} 
-            onClose={closeDeleteModal} 
-            onDelete={deleteRouteHandler} 
-            route={routeToDelete} 
-          />
-          <UserDrawer 
-            isOpen={isDrawerOpen} 
-            onClose={() => setDrawerOpen(false)} 
-            user={user} 
-            onLogout={logoutHandler} 
-            onEditProfile={() => {
-              setShowEditProfileModal(true);
-              setDrawerOpen(false);
-            }}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            onUpdatePassword={updatePasswordHandler}
-            currentPassword={currentPassword}
-            setCurrentPassword={setCurrentPassword}
-            newPassword={newPassword}
-            setNewPassword={setNewPassword}
-            confirmNewPassword={confirmNewPassword}
-            setConfirmNewPassword={setConfirmNewPassword}
-          />
-          <EditProfileModal
-            user={user}
-            show={showEditProfileModal}
-            onClose={() => setShowEditProfileModal(false)}
-            onUpdate={updateProfileHandler}
-          />
+                <div className="route-grid">
+                  {routes.map((route) => (
+                    <RouteCard key={route._id} route={route} onOpenDeleteModal={openDeleteModal} userRole={user?.role} onDownloadPDF={downloadPDF} />
+                  ))}
+                </div>
+              </>
+            )}
+          </main>
         </div>
+
+        <AddRouteModal
+          show={showAddRouteModal}
+          onClose={() => setShowAddRouteModal(false)}
+          onAddRoute={addRouteHandler}
+          routeName={routeName}
+          setRouteName={setRouteName}
+          userRole={user?.role}
+          drivers={drivers}
+          selectedDriverId={selectedDriverId}
+          setSelectedDriverId={setSelectedDriverId}
+          busNumberDigits={busNumberDigits}
+          setBusNumberDigits={(val) => setBusNumberDigits(String(val).replace(/[^a-zA-Z0-9]/g, ''))}
+          routeNumber={routeNumber}
+          setRouteNumber={(val) => setRouteNumber(String(val).replace(/\D/g, '').slice(0, 3))}
+        />
+        <DeleteRouteModal
+          show={showDeleteModal}
+          onClose={closeDeleteModal}
+          onDelete={deleteRouteHandler}
+          route={routeToDelete}
+        />
+        <UserDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          user={user}
+          onLogout={logoutHandler}
+          onEditProfile={() => {
+            setShowEditProfileModal(true);
+            setDrawerOpen(false);
+          }}
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
+          onUpdatePassword={updatePasswordHandler}
+          currentPassword={currentPassword}
+          setCurrentPassword={setCurrentPassword}
+          newPassword={newPassword}
+          setNewPassword={setNewPassword}
+          confirmNewPassword={confirmNewPassword}
+          setConfirmNewPassword={setConfirmNewPassword}
+        />
+        <EditProfileModal
+          user={user}
+          show={showEditProfileModal}
+          onClose={() => setShowEditProfileModal(false)}
+          onUpdate={updateProfileHandler}
+        />
+      </div>
+
+      {!dataLoaded && !loading && (
+        <div className="error-screen">Failed to load data. Please try again.</div>
       )}
     </div>
   );
@@ -378,11 +375,15 @@ newSocket.on('student:deleted', (data) => {
 const RouteCard = ({ route, onOpenDeleteModal, userRole, onDownloadPDF }) => {
   return (
     <div className="card">
-      <h4 className="card-title">{route.routeName}</h4>
+          <h4 className="card-title">
+        {route.routeName}
+        {route.busNumber && ` - Bus ${route.busNumber}`}
+      </h4>
       {userRole && userRole.toLowerCase() === 'admin' && route.driver && (
         <p className="driver-name">Driver: {route.driver.name}</p>
       )}
       <div className="card-actions">
+
         <Link to={`/route/${route._id}/students`} className="view-button">View Students</Link>
         <button onClick={() => onOpenDeleteModal(route)} className="delete-button">
           <FiTrash2 /> Delete
@@ -395,14 +396,14 @@ const RouteCard = ({ route, onOpenDeleteModal, userRole, onDownloadPDF }) => {
   );
 };
 
-const UserDrawer = ({ 
-  isOpen, 
-  onClose, 
-  user, 
-  onLogout, 
-  onEditProfile, 
-  activeSection, 
-  setActiveSection, 
+const UserDrawer = ({
+  isOpen,
+  onClose,
+  user,
+  onLogout,
+  onEditProfile,
+  activeSection,
+  setActiveSection,
   onUpdatePassword,
   currentPassword,
   setCurrentPassword,
@@ -474,29 +475,29 @@ const UserDrawer = ({
               </div>
 
               <form onSubmit={onUpdatePassword} className="password-form">
-                <PasswordInput 
-                  label="Current Password" 
-                  value={currentPassword} 
-                  onChange={e => setCurrentPassword(e.target.value)} 
-                  isVisible={showCurrentPassword} 
-                  onToggle={() => setShowCurrentPassword(!showCurrentPassword)} 
+                <PasswordInput
+                  label="Current Password"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  isVisible={showCurrentPassword}
+                  onToggle={() => setShowCurrentPassword(!showCurrentPassword)}
                 />
-                <PasswordInput 
-                  label="New Password" 
-                  value={newPassword} 
-                  onChange={e => setNewPassword(e.target.value)} 
-                  isVisible={showNewPassword} 
-                  onToggle={() => setShowNewPassword(!showNewPassword)} 
+                <PasswordInput
+                  label="New Password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  isVisible={showNewPassword}
+                  onToggle={() => setShowNewPassword(!showNewPassword)}
                 />
-                
+
                 <div className="input-group">
                   <label className="input-label">Confirm New Password</label>
-                  <input 
-                    type="password" 
-                    value={confirmNewPassword} 
-                    onChange={e => setConfirmNewPassword(e.target.value)} 
-                    required 
-                    className="input" 
+                  <input
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={e => setConfirmNewPassword(e.target.value)}
+                    required
+                    className="input"
                     placeholder="Confirm your new password"
                   />
                 </div>
@@ -558,12 +559,12 @@ const PasswordInput = ({ label, value, onChange, isVisible, onToggle }) => (
   <div className="input-group">
     <label className="input-label">{label}</label>
     <div className="password-input-wrapper">
-      <input 
-        type={isVisible ? 'text' : 'password'} 
-        value={value} 
-        onChange={onChange} 
-        required 
-        className="input" 
+      <input
+        type={isVisible ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        required
+        className="input"
         placeholder={`Enter your ${label.toLowerCase()}`}
       />
       <button type="button" onClick={onToggle} className="eye-button">
@@ -601,6 +602,7 @@ const AddRouteModal = ({ show, onClose, onAddRoute, routeName, setRouteName, use
                 onChange={(e) => setBusNumberDigits(e.target.value)}
                 className="input"
                 placeholder="Enter letters and digits"
+                required
               />
             </div>
             <small className="hint">Bus number plate (letters and digits)</small>

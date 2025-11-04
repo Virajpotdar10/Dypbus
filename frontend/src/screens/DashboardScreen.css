@@ -11,7 +11,7 @@ body {
   background-color: #f5f7fa;
 }
 
-/* ===== GENERAL STYLE ===== */
+
 body {
   font-family: 'Poppins', sans-serif;
   background: #f8f9ff;
@@ -19,7 +19,6 @@ body {
   padding: 0;
 }
 
-/* ===== HEADER CONTAINER ===== */
 .header {
   display: flex;
   align-items: center;
@@ -35,7 +34,7 @@ body {
 .header-title {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #12227c;
+  color: #feffff;
 }
 
 /* ===== RIGHT SIDE: PROFILE + BUTTON ===== */
@@ -979,7 +978,7 @@ header[style*="background-color: rgb(0, 32, 91)"] {
 .header-title {
   margin: 0;
   font-weight: 600;
-  color: #1a2b8f;
+  color: #fdfeff;
   font-size: 1.5rem;
   display: flex;
   align-items: center;
@@ -1221,12 +1220,12 @@ header[style*="background-color: rgb(0, 32, 91)"] {
   .main-content {
     padding: 1rem !important;
     margin: 0 auto !important;
-    max-width: 95% !important;
+    max-width: 98% !important;
   }
 
   /* Header optimization */
   .header {
-    padding: 0.8rem 1rem !important;
+    padding: 1rem 1rem !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -1234,7 +1233,7 @@ header[style*="background-color: rgb(0, 32, 91)"] {
     gap: 0.8rem !important;
     background: #fff !important;
     border-radius: 10px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.05) !important;
     flex-direction: column; gap: 1rem; padding: 1rem; 
   }
   .header-controls { flex-wrap: wrap; justify-content: center; }  
@@ -1253,7 +1252,7 @@ header[style*="background-color: rgb(0, 32, 91)"] {
   .primary-button {
     width: 100% !important;
     justify-content: center !important;
-    padding: 0.75rem 1rem !important;
+    padding: 0.85rem 1rem !important;
     font-size: 1rem !important;
     border-radius: 10px !important;
     transition: all 0.3s ease !important;
@@ -1267,7 +1266,7 @@ header[style*="background-color: rgb(0, 32, 91)"] {
   /* Text adjustments for smaller view */
   h1, h2, h3 {
     text-align: center !important;
-    font-size: 1.2rem !important;
+    font-size: 1.5rem !important;
     line-height: 1.4 !important;
   }
 }
@@ -1283,9 +1282,6 @@ header[style*="background-color: rgb(0, 32, 91)"] {
     padding: 0.75rem 1rem;
   }
 
-  .header-title {
-    font-size: 1.1rem;
-  }
   .user-info {
     padding: 0.3rem;
     align-items: center;

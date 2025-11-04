@@ -4,6 +4,9 @@ const path = require('path');
 const Route = require('../models/Route');
 const Student = require('../models/Student');
 
+// @desc    Generate PDF report for a route
+// @route   GET /api/v1/pdf/route/:routeId
+// @access  Private
 exports.generateRoutePDF = async (req, res) => {
   try {
     const route = await Route.findById(req.params.routeId).populate('driver');

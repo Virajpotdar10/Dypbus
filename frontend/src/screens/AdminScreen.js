@@ -3,10 +3,9 @@ import API from '../api';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './AdminScreen.css';
+import ConfirmationModal from '../components/ConfirmationModal';
 
-// Icons (assuming you're using react-icons)
 import {
-  FiUsers,
   FiTruck,
   FiUser,
   FiBook,
@@ -14,9 +13,10 @@ import {
   FiEdit,
   FiTrash2,
   FiDownload,
+  FiRefreshCw,
   FiLogOut,
-  FiHome,
-  FiX
+  FiX,
+  FiUserPlus,
 } from 'react-icons/fi';
 
 const AdminScreen = () => {
@@ -69,20 +69,16 @@ const AdminScreen = () => {
 };
 
 const AdminHeader = ({ user, onLogout }) => (
-
   <header className="admin-header">
     <div className="header-left">
-    <h1 className="header-title">
-  <FiUsers />
-  Admin Dashboard
-</h1>
+      <button onClick={() => window.location.href = '/'} className="btn btn-driver-view">
+        Back
+      </button>
     </div>
+    <h1 className="header-title">
+      Admin Dashboard
+    </h1>
     <div className="header-right">
-      <div className="user-profile">
-        <button onClick={() => window.location.href = '/'} className="btn btn-driver-view">
-          <FiHome /> Driver View
-        </button>
-      </div>
       <button onClick={onLogout} className="btn-logout">
         <FiLogOut /> Log out
       </button>
@@ -91,7 +87,7 @@ const AdminHeader = ({ user, onLogout }) => (
 );
 
 const AdminTabs = () => {
-  const [activeTab, setActiveTab] = useState('drivers');
+  const [activeTab, setActiveTab] = useState('students');
   const [data, setData] = useState({ drivers: [], routes: [], students: [] });
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ drivers: 0, routes: 0, students: 0 });
@@ -195,7 +191,6 @@ const AdminTabs = () => {
     };
 
     setupSocketListeners();
-
     return () => socket.disconnect();
   }, [fetchData]);
 
@@ -203,11 +198,11 @@ const AdminTabs = () => {
     <div className="admin-tabs-container">
       <div className="stats-cards">
         <StatCard
-          title="Drivers"
-          count={stats.drivers}
-          icon={<FiUser />}
-          color="#4f46e5"
-          onClick={() => setActiveTab('drivers')}
+          title="Students"
+          count={stats.students}
+          icon={<FiBook />}
+          color="#f59e0b"
+          onClick={() => setActiveTab('students')}
         />
         <StatCard
           title="Routes"
@@ -217,21 +212,20 @@ const AdminTabs = () => {
           onClick={() => setActiveTab('routes')}
         />
         <StatCard
-          title="Students"
-          count={stats.students}
-          icon={<FiBook />}
-          color="#f59e0b"
-          onClick={() => setActiveTab('students')}
+          title="Drivers"
+          count={stats.drivers}
+          icon={<FiUser />}
+          color="#4f46e5"
+          onClick={() => setActiveTab('drivers')}
         />
       </div>
-
       <div className="tabs-navigation">
         <TabButton
-          name="drivers"
-          count={stats.drivers}
+          name="students"
+          count={stats.students}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          icon={<FiUser />}
+          icon={<FiBook />}
         />
         <TabButton
           name="routes"
@@ -241,11 +235,11 @@ const AdminTabs = () => {
           icon={<FiTruck />}
         />
         <TabButton
-          name="students"
-          count={stats.students}
+          name="drivers"
+          count={stats.drivers}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          icon={<FiBook />}
+          icon={<FiUser />}
         />
       </div>
 
@@ -257,9 +251,9 @@ const AdminTabs = () => {
           </div>
         ) : (
           <>
-            {activeTab === 'drivers' && <DriversTab drivers={data.drivers} fetchData={fetchData} />}
-            {activeTab === 'routes' && <RoutesTab routes={data.routes} drivers={data.drivers} fetchData={fetchData} />}
             {activeTab === 'students' && <StudentsTab students={data.students} routes={data.routes} fetchData={fetchData} />}
+            {activeTab === 'routes' && <RoutesTab routes={data.routes} drivers={data.drivers} fetchData={fetchData} />}
+            {activeTab === 'drivers' && <DriversTab drivers={data.drivers} fetchData={fetchData} />}
           </>
         )}
       </div>
@@ -289,84 +283,17 @@ const TabButton = ({ name, count, activeTab, setActiveTab, icon }) => (
     {count > 0 && <span className="count-badge">{count}</span>}
   </button>
 );
-
-const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
-  const [students, setStudents] = useState(initialStudents);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState(null);
-  const [formData, setFormData] = useState({});
-  const [filters, setFilters] = useState({ college: 'All', search: '' });
-  const [pagination, setPagination] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const fetchStudents = useCallback(async (page = 1) => {
-    try {
-      const params = new URLSearchParams({ page });
-      if (filters.college !== 'All') params.append('college', filters.college);
-      if (filters.search) params.append('search', filters.search);
-
-      const { data } = await API.get(`/api/v1/students?${params.toString()}`);
-      setStudents(data.data || []);
-      setPagination(data.pagination || {});
-    } catch (error) {
-      console.error('Failed to fetch students', error);
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    fetchStudents(currentPage);
-  }, [fetchStudents, currentPage]);
-
-  const handleFilterChange = (college) => {
-    setFilters(prev => ({ ...prev, college }));
-    setCurrentPage(1);
+const StudentsTab = ({ students, routes, fetchData }) => {
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [filters, setFilters] = useState({ route: 'All', search: '' });
+  const [collegeCounts, setCollegeCounts] = useState({ DYPCET: 0, DYPSEM: 0, Diploma: 0 });
+  const handleFilterChange = (routeId) => {
+    setFilters(prev => ({ ...prev, route: routeId }));
   };
 
   const handleSearchChange = (e) => {
     setFilters(prev => ({ ...prev, search: e.target.value }));
-    setCurrentPage(1);
   };
-
-  const handleOpenModal = (student = null) => {
-    const initialFormData = {
-      name: '',
-      mobileNumber: '',
-      department: '',
-      stop: '',
-      feeStatus: 'Not Paid',
-      college: 'DYPCET',
-      route: ''
-    };
-
-    if (student) {
-      setEditingStudent(student);
-      setFormData({ ...initialFormData, ...student, route: student.route?._id || '' });
-    } else {
-      setEditingStudent(null);
-      setFormData(initialFormData);
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingStudent(null);
-    setFormData({});
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const url = editingStudent ? `/api/v1/students/${editingStudent._id}` : '/api/v1/students';
-    const method = editingStudent ? 'put' : 'post';
-    try {
-      await API[method](url, formData);
-      fetchData();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Failed to save student', error);
-    }
-  };
-
   const handleDelete = async (studentId) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
@@ -377,29 +304,84 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
       }
     }
   };
-
-  const handleDownloadPdf = async () => {
+  const handleResetFees = async () => {
     try {
-      const response = await API.get('/api/v1/students/export.pdf', { responseType: 'blob' });
+
+      await API.post(`/api/v1/students/reset-all-fees`);
+      alert('Fee status for ALL students in the system has been reset to Not Paid.');
+      setIsResetModalOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Failed to reset all fees', error);
+      alert(`Error: ${error.response?.data?.msg || 'Could not reset all fees.'}`);
+    }
+  };
+  const handleDownload = async (format) => {
+    const routeId = filters.route;
+    if (routeId === 'All') {
+      alert('Please select a specific route to export students.');
+      return;
+    }
+    try {
+      const response = await API.get(`/api/v1/routes/${routeId}/students/export.${format}`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'all-students.pdf');
+      link.setAttribute('download', `route-${routeId}-students.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (error) {
-      console.error('Failed to download PDF', error);
+      console.error(`Failed to download ${format}`, error);
+      alert(`Could not export ${format}. Please try again.`);
     }
   };
+  const filteredStudents = students.filter(student => {
+    const searchMatch = filters.search
+      ? student.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      student.department.toLowerCase().includes(filters.search.toLowerCase()) ||
+      student.mobileNumber.includes(filters.search)
+      : true;
+
+    const routeMatch = filters.route !== 'All'
+      ? student.route?._id === filters.route
+      : true;
+
+    return searchMatch && routeMatch;
+  });
+  useEffect(() => {
+    const counts = {
+      DYPCET: 0,
+      DYPSEM: 0,
+      Diploma: 0,
+    };
+
+    filteredStudents.forEach(student => {
+      if (student.college === 'DYPCET') {
+        counts.DYPCET++;
+      } else if (student.college === 'DYPSEM') {
+        counts.DYPSEM++;
+      } else if (student.college === 'Diploma') {
+        counts.Diploma++;
+      }
+    });
+
+    setCollegeCounts(counts);
+  }, [filteredStudents]);
 
   return (
     <div className="tab-panel">
       <div className="panel-header">
         <h2>Students Management</h2>
         <div className="header-actions">
-          <button onClick={handleDownloadPdf} className="btn btn-secondary">
+          <button onClick={() => handleDownload('csv')} className="btn btn-secondary">
+            <FiDownload /> Export CSV
+          </button>
+          <button onClick={() => handleDownload('pdf')} className="btn btn-secondary">
             <FiDownload /> Export PDF
+          </button>
+          <button onClick={() => setIsResetModalOpen(true)} className="btn btn-warning">
+            <FiRefreshCw /> Reset Fees
           </button>
         </div>
       </div>
@@ -415,16 +397,33 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
           />
         </div>
 
-        <div className="filter-buttons">
-          {['All', 'DYPCET', 'DYPSEM', 'Diploma'].map(college => (
-            <button
-              key={college}
-              className={`filter-btn ${filters.college === college ? 'active' : ''}`}
-              onClick={() => handleFilterChange(college)}
-            >
-              {college === 'All' ? 'All Students' : college}
-            </button>
-          ))}
+        <div className="search-box">
+          <FiTruck className="search-icon" />
+          <select onChange={(e) => handleFilterChange(e.target.value)} value={filters.route}>
+            <option value="All">All Routes</option>
+            {routes.map(route => (
+              <option key={route._id} value={route._id}>{route.routeName}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="college-counts-container">
+        <h4 className="counts-title">
+          {filters.route === 'All' ? 'Total Student Counts by College' : 'Counts for Selected Route'}
+        </h4>
+        <div className="counts-wrapper">
+          <div className="count-box">
+            <div className="count-college">DYPCET</div>
+            <div className="count-number">{collegeCounts.DYPCET}</div>
+          </div>
+          <div className="count-box">
+            <div className="count-college">DYPSEM</div>
+            <div className="count-number">{collegeCounts.DYPSEM}</div>
+          </div>
+          <div className="count-box">
+            <div className="count-college">Diploma</div>
+            <div className="count-number">{collegeCounts.Diploma}</div>
+          </div>
         </div>
       </div>
 
@@ -432,42 +431,41 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Mobile</th>
-              <th>Department</th>
+              <th>Student Name </th>
+              <th>Contact</th>
+              <th>Department & Year</th>
               <th>Route</th>
               <th>Fee Status</th>
-              <th>College</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {students.map(student => (
+            {filteredStudents.map(student => (
               <tr key={student._id}>
-                <td>
+                <td data-label="Student">
                   <div className="student-name">{student.name}</div>
-                  {student.stop && <div className="student-stop">{student.stop}</div>}
+                  {student.pickupPoint && <div className="student-stop">{student.pickupPoint}</div>}
                 </td>
-                <td>{student.mobileNumber}</td>
-                <td>{student.department}</td>
-                <td>
+                <td data-label="Contact">
+                  <div>{student.mobileNumber}</div>
+                  {student.parentMobileNumber && <div className="text-muted">P: {student.parentMobileNumber}</div>}
+                </td>
+                <td data-label="Details">
+                  <div>{student.department}</div>
+                  <div className="text-muted">{student.year}</div>
+                </td>
+                <td data-label="Route">
                   <span className={`route-tag ${student.route ? '' : 'no-route'}`}>
                     {student.route?.routeName || 'No Route'}
                   </span>
                 </td>
-                <td>
+                <td data-label="Fee Status">
                   <span className={`status-badge ${student.feeStatus === 'Paid' ? 'paid' : 'pending'}`}>
                     {student.feeStatus}
                   </span>
                 </td>
-                <td>
-                  <span className="college-badge">{student.college}</span>
-                </td>
-                <td>
+                <td data-label="Actions">
                   <div className="action-buttons">
-                    <button onClick={() => handleOpenModal(student)} className="btn-icon btn-edit" title="Edit">
-                      <FiEdit />
-                    </button>
                     <button onClick={() => handleDelete(student._id)} className="btn-icon btn-delete" title="Delete">
                       <FiTrash2 />
                     </button>
@@ -482,189 +480,36 @@ const StudentsTab = ({ students: initialStudents, routes, fetchData }) => {
           <div className="empty-state">
             <FiUser size={48} />
             <h3>No Students Found</h3>
-            <p>Try adjusting your search or add a new student</p>
+            <p>Try adjusting your filters or add a new student.</p>
           </div>
         )}
       </div>
-
-      {pagination.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            onClick={() => setCurrentPage(p => p - 1)}
-            disabled={!pagination.hasPrevPage}
-            className="pagination-btn"
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(p => p + 1)}
-            disabled={!pagination.hasNextPage}
-            className="pagination-btn"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {isModalOpen && (
-        <StudentFormModal
-          routes={routes}
-          formData={formData}
-          setFormData={setFormData}
-          handleSubmit={handleSubmit}
-          handleCloseModal={handleCloseModal}
-          editingStudent={editingStudent}
+      {isResetModalOpen && (
+        <ConfirmationModal
+          title="Confirm Fee Reset"
+          message="Are you sure you want to reset all student fees for the selected route to 'Not Paid'? This action cannot be undone."
+          onConfirm={handleResetFees}
+          onCancel={() => setIsResetModalOpen(false)}
+          confirmText="Yes, Reset Fees"
         />
       )}
     </div>
   );
 };
 
-const StudentFormModal = ({ routes, formData, setFormData, handleSubmit, handleCloseModal, editingStudent }) => (
-  <div className="modal-overlay">
-    <div className="modal">
-      <div className="modal-header">
-        <h3>{editingStudent ? 'Edit Student' : 'Add New Student'}</h3>
-        <button onClick={handleCloseModal} className="modal-close">
-          <FiX />
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="modal-form">
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Mobile Number</label>
-            <input
-              type="text"
-              value={formData.mobileNumber || ''}
-              onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Department</label>
-            <input
-              type="text"
-              value={formData.department || ''}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Bus Stop</label>
-            <input
-              type="text"
-              value={formData.stop || ''}
-              onChange={(e) => setFormData({ ...formData, stop: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Fee Status</label>
-            <select
-              value={formData.feeStatus || 'Not Paid'}
-              onChange={(e) => setFormData({ ...formData, feeStatus: e.target.value })}
-            >
-              <option value="Not Paid">Not Paid</option>
-              <option value="Paid">Paid</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>College</label>
-            <select
-              value={formData.college || 'DYPCET'}
-              onChange={(e) => setFormData({ ...formData, college: e.target.value })}
-            >
-              <option value="DYPCET">DYPCET</option>
-              <option value="DYPSEM">DYPSEM</option>
-              <option value="Diploma">Diploma</option>
-            </select>
-          </div>
-
-          <div className="form-group full-width">
-            <label>Assign Route</label>
-            <select
-              value={formData.route || ''}
-              onChange={(e) => setFormData({ ...formData, route: e.target.value })}
-              required
-            >
-              <option value="">Select a Route</option>
-              {routes.map(route => (
-                <option key={route._id} value={route._id}>
-                  {route.routeName} {route.driver?.name && `(${route.driver.name})`}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="modal-actions">
-          <button type="button" onClick={handleCloseModal} className="btn btn-secondary">
-            Cancel
-          </button>
-          <button type="submit" className="btn btn-primary">
-            {editingStudent ? 'Update Student' : 'Add Student'}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-);
 
 const RoutesTab = ({ routes, drivers, fetchData }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRoute, setEditingRoute] = useState(null);
-  const [formData, setFormData] = useState({ routeName: '', driver: '' });
-
-  const handleOpenModal = (route = null) => {
-    if (route) {
-      setEditingRoute(route);
-      setFormData({ routeName: route.routeName, driver: route.driver?._id || '' });
-    } else {
-      setEditingRoute(null);
-      setFormData({ routeName: '', driver: '' });
-    }
-    setIsModalOpen(true);
+  const copyToClipboard = (routeId) => {
+    const link = `${window.location.origin}/route/${routeId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      alert('Registration link copied to clipboard!');
+    }, (err) => {
+      console.error('Could not copy text: ', err);
+      alert('Failed to copy link.');
+    });
   };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingRoute(null);
-    setFormData({ routeName: '', driver: '' });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const url = editingRoute ? `/api/v1/routes/${editingRoute._id}` : '/api/v1/routes';
-    const method = editingRoute ? 'put' : 'post';
-    try {
-      await API[method](url, formData);
-      fetchData();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Failed to save route', error);
-    }
-  };
-
   const handleDelete = async (routeId) => {
-    if (window.confirm('Are you sure you want to delete this route? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this route? This will also unassign all students from it.')) {
       try {
         await API.delete(`/api/v1/routes/${routeId}`);
         fetchData();
@@ -678,34 +523,35 @@ const RoutesTab = ({ routes, drivers, fetchData }) => {
     <div className="tab-panel">
       <div className="panel-header">
         <h2>Routes Management</h2>
-        <div className="header-actions">
-          {/* Add Route button is intentionally removed as per your request */}
-        </div>
       </div>
-
       <div className="table-container">
         <table className="data-table">
           <thead>
             <tr>
               <th>Route Name</th>
               <th>Assigned Driver</th>
+              <th>Capacity</th>
+              <th>Registration Link</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {routes.map(route => (
               <tr key={route._id}>
-                <td>{route.routeName}</td>
-                <td>
+                <td data-label="Route Name">{route.routeName}</td>
+                <td data-label="Driver">
                   <span className={`driver-tag ${route.driver ? '' : 'no-driver'}`}>
                     {route.driver?.name || 'Not Assigned'}
                   </span>
                 </td>
-                <td>
+                <td data-label="Capacity">{route.capacity}</td>
+                <td data-label="Link">
+                  <button onClick={() => copyToClipboard(route._id)} className="btn btn-link">
+                    Copy Link
+                  </button>
+                </td>
+                <td data-label="Actions">
                   <div className="action-buttons">
-                    <button onClick={() => handleOpenModal(route)} className="btn-icon btn-edit" title="Edit">
-                      <FiEdit />
-                    </button>
                     <button onClick={() => handleDelete(route._id)} className="btn-icon btn-delete" title="Delete">
                       <FiTrash2 />
                     </button>
@@ -719,73 +565,18 @@ const RoutesTab = ({ routes, drivers, fetchData }) => {
           <div className="empty-state">
             <FiTruck size={48} />
             <h3>No Routes Found</h3>
-            <p>Routes will appear here once they are created.</p>
+            <p>Click 'Add Route' to create one.</p>
           </div>
         )}
       </div>
-
-      {isModalOpen && (
-        <RouteFormModal
-          drivers={drivers}
-          formData={formData}
-          setFormData={setFormData}
-          handleSubmit={handleSubmit}
-          handleCloseModal={handleCloseModal}
-          editingRoute={editingRoute}
-        />
-      )}
     </div>
   );
 };
-
-const RouteFormModal = ({ drivers, formData, setFormData, handleSubmit, handleCloseModal, editingRoute }) => (
-  <div className="modal-overlay">
-    <div className="modal">
-      <div className="modal-header">
-        <h3>{editingRoute ? 'Edit Route' : 'Add New Route'}</h3>
-        <button onClick={handleCloseModal} className="modal-close"><FiX /></button>
-      </div>
-      <form onSubmit={handleSubmit} className="modal-form">
-        <div className="form-grid">
-          <div className="form-group full-width">
-            <label>Route Name</label>
-            <input
-              type="text"
-              value={formData.routeName}
-              onChange={(e) => setFormData({ ...formData, routeName: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group full-width">
-            <label>Assign Driver</label>
-            <select
-              value={formData.driver}
-              onChange={(e) => setFormData({ ...formData, driver: e.target.value })}
-              required
-            >
-              <option value="">Select a Driver</option>
-              {drivers.map(driver => (
-                <option key={driver._id} value={driver._id}>{driver.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="modal-actions">
-          <button type="button" onClick={handleCloseModal} className="btn btn-secondary">Cancel</button>
-          <button type="submit" className="btn btn-primary">
-            {editingRoute ? 'Update Route' : 'Create Route'}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-);
-
-// REPLACE the old DriversTab with this new, complete version
 const DriversTab = ({ drivers, fetchData }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'driver' });
+  const [driverToDelete, setDriverToDelete] = useState(null);
 
   const handleOpenModal = (driver = null) => {
     if (driver) {
@@ -793,7 +584,7 @@ const DriversTab = ({ drivers, fetchData }) => {
       setFormData({ name: driver.name, email: driver.email, password: '', role: driver.role });
     } else {
       setEditingDriver(null);
-      setFormData({ name: '', email: '', password: '', role: 'driver' });
+      setFormData({ name: '', email: '', password: '', role: 'admin' });
     }
     setIsModalOpen(true);
   };
@@ -827,22 +618,32 @@ const DriversTab = ({ drivers, fetchData }) => {
     }
   };
 
-  const handleDelete = async (driverId) => {
-    if (window.confirm('Are you sure you want to delete this driver?')) {
-      try {
-        await API.delete(`/api/v1/users/${driverId}`);
-        fetchData();
-      } catch (error) {
-        console.error('Failed to delete driver', error);
-      }
+
+  const confirmDelete = async () => {
+    if (!driverToDelete) return;
+    try {
+      // Step 1: Unassign the driver from all routes first.
+      await API.post(`/api/v1/users/${driverToDelete._id}/unassign`);
+
+      // Step 2: Now, delete the driver.
+      await API.delete(`/api/v1/users/${driverToDelete._id}`);
+
+      fetchData(); // Refresh all data
+      setDriverToDelete(null); // Close the modal on success
+    } catch (error) {
+      console.error('Failed to delete driver', error);
+      alert(`Error: Could not delete driver. ${error.response?.data?.msg || ''}`);
     }
   };
-
   return (
     <div className="tab-panel">
       <div className="panel-header">
+
         <h2>Drivers Management</h2>
         <div className="header-actions">
+          <button onClick={() => handleOpenModal()} className="btn btn-primary">
+            <FiUserPlus /> Add User
+          </button>
         </div>
       </div>
 
@@ -853,26 +654,24 @@ const DriversTab = ({ drivers, fetchData }) => {
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
-              <th>Created At</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {drivers.map(driver => (
               <tr key={driver._id}>
-                <td>{driver.name}</td>
-                <td>{driver.email}</td>
-                <td>
+                <td data-label="Name">{driver.name}</td>
+                <td data-label="Email">{driver.email}</td>
+                <td data-label="Role">
                   <span className={`role-badge ${driver.role}`}>{driver.role}</span>
                 </td>
-                <td>{new Date(driver.createdAt).toLocaleDateString()}</td>
-                <td>
+                <td data-label="Actions">
                   <div className="action-buttons">
-                    <button onClick={() => handleOpenModal(driver)} className="btn-icon btn-edit" title="Edit">
-                      <FiEdit />
+                    <button onClick={() => handleOpenModal(driver)} className="btn btn-secondary btn-sm" title="Edit">
+                      <FiEdit /> Edit
                     </button>
-                    <button onClick={() => handleDelete(driver._id)} className="btn-icon btn-delete" title="Delete">
-                      <FiTrash2 />
+                    <button onClick={() => setDriverToDelete(driver)} className="btn btn-danger btn-sm" title="Delete">
+                      <FiTrash2 /> Delete
                     </button>
                   </div>
                 </td>
@@ -898,11 +697,33 @@ const DriversTab = ({ drivers, fetchData }) => {
           editingDriver={editingDriver}
         />
       )}
+      {driverToDelete && (
+        <DeleteConfirmationModal
+          driverName={driverToDelete.name}
+          onConfirm={confirmDelete}
+          onCancel={() => setDriverToDelete(null)}
+        />
+      )}
     </div>
   );
 };
-
-// ADD this new component right below the DriversTab component
+const DeleteConfirmationModal = ({ driverName, onConfirm, onCancel }) => (
+  <div className="modal-overlay">
+    <div className="modal" style={{ maxWidth: '400px' }}>
+      <div className="modal-header">
+        <h3>Confirm Deletion</h3>
+        <button onClick={onCancel} className="modal-close"><FiX /></button>
+      </div>
+      <div className="modal-body" style={{ padding: '1.5rem' }}>
+        <p>Are you sure you want to remove <strong>{driverName}</strong>? This action cannot be undone.</p>
+      </div>
+      <div className="modal-actions">
+        <button type="button" onClick={onCancel} className="btn btn-secondary">No, Cancel</button>
+        <button type="button" onClick={onConfirm} className="btn btn-danger">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+);
 const DriverFormModal = ({ formData, setFormData, handleSubmit, handleCloseModal, editingDriver }) => (
   <div className="modal-overlay">
     <div className="modal">

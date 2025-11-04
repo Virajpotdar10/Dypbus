@@ -1,4 +1,5 @@
 const Driver = require('../models/Driver');
+const Route = require('../models/Route');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const { invalidateCache } = require('../middleware/cache');
@@ -74,9 +75,6 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc    Delete user (admin only)
-// @route   DELETE /api/v1/users/:id
-// @access  Private/Admin
 exports.deleteUser = asyncHandler(async (req, res, next) => {
   try {
     const user = await Driver.findById(req.params.id);
@@ -85,16 +83,15 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
       return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
     }
     
-    // Prevent deleting self
     if (user._id.toString() === req.user.id) {
       return next(new ErrorResponse('Cannot delete your own account', 400));
     }
     
-    await user.remove();
+    // Replace user.remove() with findByIdAndDelete()
+    await Driver.findByIdAndDelete(req.params.id);
     
     invalidateCache.drivers(req.params.id);
 
-    // Emit real-time event
     emitDriverEvent(req, 'deleted', { driverId: req.params.id, deletedBy: req.user.name });
     
     res.status(200).json({ success: true, data: {} });
@@ -103,9 +100,7 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc    Get all drivers with their routes and students
-// @route   GET /api/v1/users/drivers/full
-// @access  Private/Admin
+
 exports.getDriversWithRoutesAndStudents = asyncHandler(async (req, res, next) => {
   if (req.user.role !== 'admin') {
     return next(new ErrorResponse('Not authorized to access this route', 403));
@@ -169,7 +164,22 @@ exports.getDriversWithRoutesAndStudents = asyncHandler(async (req, res, next) =>
 
     res.status(200).json({ success: true, count: result.length, data: result });
   } catch (err) {
-    console.error('❌ Error fetching drivers:', err);
+    console.error('Error fetching drivers:', err);
     next(err);
   }
 });
+
+exports.unassignDriverFromRoutes = asyncHandler(async (req, res, next) => {
+
+  await Route.updateMany(
+    { driver: req.params.id },
+    { $set: { driver: null } }
+  );
+  res.status(200).json({
+    success: true,
+    data: {},
+    message: 'Driver was successfully unassigned from all routes.'
+  });
+});
+
+

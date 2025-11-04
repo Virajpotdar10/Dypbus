@@ -34,41 +34,14 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
-// --- START: CORS and Socket.IO Configuration ---
-
-// 1. Define the allowed origins (domains) for CORS
-const allowedOrigins = [
-  'http://localhost:3000', // For local development
-  'https://dyptransport.netlify.app' // Your deployed Netlify frontend
-];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-};
-
-// 3. Apply the CORS middleware to your Express app
-app.use(cors(corsOptions));
-
-// 4. Initialize Socket.IO with the same CORS options
+// Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
-
-// --- END: CORS and Socket.IO Configuration ---
 
 // Make io accessible to routes
 app.set('io', io);
@@ -77,7 +50,16 @@ app.set('io', io);
 app.use(helmet());
 
 // Compression middleware for better performance
-app.use(compression());
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6,
+  threshold: 1024
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -92,6 +74,12 @@ app.use('/api/', limiter);
 // Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false }));
+
+// Enable CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 
 // Dev logging middleware
 if (process.env.NODE_ENV === 'development') {
@@ -109,7 +97,7 @@ app.use('/api/v1/pdf', require('./routes/pdf'));
 // Serve frontend production build
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
-  const clientBuildPath = path.resolve(__dirname, '..', 'frontend', 'build');
+  const clientBuildPath = path.join(__dirname, '..', 'frontend', 'build');
   app.use(express.static(clientBuildPath));
   app.get('*', (req, res) => {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
@@ -122,6 +110,7 @@ app.use(errorHandler);
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.error(`Error: ${err.message}`);
+  // Close server & exit process
   server.close(() => process.exit(1));
 });
 
@@ -139,29 +128,17 @@ const PORT = process.env.PORT || 5001;
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
-
-  // Join a room specific to a route
-  socket.on('joinRouteRoom', (routeId) => {
-    socket.join(routeId);
-    console.log(`Socket ${socket.id} joined room ${routeId}`);
-  });
-
-  // Leave a room
-  socket.on('leaveRouteRoom', (routeId) => {
-    socket.leave(routeId);
-    console.log(`Socket ${socket.id} left room ${routeId}`);
-  });
-
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
+    console.log('User disconnected');
   });
 });
 
 // Start server
 const startServer = async () => {
   try {
+    // Initialize cache
     await initializeCache();
+    
     server.listen(PORT, () => {
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });

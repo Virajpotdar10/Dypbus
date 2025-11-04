@@ -131,9 +131,12 @@ exports.deleteRoute = async (req, res, next) => {
       return res.status(401).json({ success: false, msg: 'Not authorized to delete this route' });
     }
 
+    // Use findByIdAndDelete instead of the deprecated .remove()
     await Route.findByIdAndDelete(req.params.id);
 
+    // Invalidate caches
     invalidateCache.routes();
+    invalidateCache.students(req.params.id);
 
     // Emit real-time event
     emitRouteEvent(req, 'deleted', { routeId: req.params.id, deletedBy: req.driver.name });

@@ -5,7 +5,6 @@ const { Transform } = require('stream');
 const { invalidateCache } = require('../middleware/cache');
 const mongoose = require('mongoose'); // Import mongoose
 
-// Helper to emit real-time events
 const emitStudentEvent = (req, eventType, data) => {
   const io = req.app.get('io');
   if (io) {
@@ -13,9 +12,6 @@ const emitStudentEvent = (req, eventType, data) => {
   }
 };
 
-// @desc    Get all students for a specific route with pagination and filtering
-// @route   GET /api/v1/routes/:routeId/students
-// @access  Private
 exports.getStudents = async (req, res, next) => {
   console.log('--- DEBUG: getStudents ---');
   try {
@@ -75,7 +71,7 @@ exports.getStudents = async (req, res, next) => {
     // Execute optimized queries in parallel
     const [students, total, routeInfo, stats] = await Promise.all([
       Student.find(query)
-        .select('name mobileNumber department stop feeStatus college createdAt route')
+               .select('name mobileNumber parentMobileNumber department stop feeStatus college createdAt route')
         .populate('route', 'routeName busNumber')
         .sort({ [sortField]: sortDirection })
         .skip(skip)
@@ -87,6 +83,7 @@ exports.getStudents = async (req, res, next) => {
             _id: student._id,
             name: student.name,
             mobileNumber: student.mobileNumber,
+            parentMobileNumber: student.parentMobileNumber,
             department: student.department,
             stop: student.stop,
             feeStatus: student.feeStatus,
@@ -104,10 +101,10 @@ exports.getStudents = async (req, res, next) => {
             _id: null,
             paid: { $sum: { $cond: [{ $eq: ['$feeStatus', 'Paid'] }, 1, 0] } },
             notPaid: { $sum: { $cond: [{ $eq: ['$feeStatus', 'Not Paid'] }, 1, 0] } }
-          }
-        }
-      ])
-    ]);
+      }
+    }
+  ])
+]);
 
     console.log(`Found ${total} students in the database.`);
     console.log('First student record (if any):', students.length > 0 ? students[0] : 'No students found.');
@@ -124,7 +121,7 @@ exports.getStudents = async (req, res, next) => {
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
-    res.status(200).json({ 
+    res.status(200).json({
       success: true,
       data: students,
       stats: feeStats,
@@ -144,13 +141,10 @@ exports.getStudents = async (req, res, next) => {
   }
 };
 
-// @desc    Add a student to a route
-// @route   POST /api/v1/routes/:routeId/students
-// @access  Private
 exports.addStudent = async (req, res, next) => {
   try {
     const { routeId } = req.params;
-    const { name, mobileNumber,parentMobileNumber, department, stop, college, feeStatus } = req.body;
+    const { name, mobileNumber, parentMobileNumber, department, stop, college, feeStatus } = req.body;
 
     console.log('Student addition attempt:', { routeId, name, mobileNumber, department, stop });
 
@@ -159,42 +153,39 @@ exports.addStudent = async (req, res, next) => {
       return res.status(400).json({ success: false, msg: 'Invalid route id' });
     }
 
-    // Validate required fields
-   // from backend/controllers/students.js
-if (!name || !department || !stop) {
-  return res.status(400).json({
-    success: false,
-    msg: 'Please provide all required fields: name, department, stop'
-  });
-}
+    if (!name || !department || !stop) {
+      return res.status(400).json({
+        success: false,
+        msg: 'Please provide all required fields: name, department, stop'
+      });
+    }
 
     const route = await Route.findById(routeId);
     if (!route) {
       console.log('Route not found:', routeId);
       return res.status(404).json({ success: false, msg: 'Route not found' });
     }
-
-    // Now it's safe to access route properties
     console.log('Route found:', { routeId, routeName: route.routeName, driverId: route.driver });
     console.log('Current user:', { userId: req.user?._id, role: req.user?.role });
 
-    // Check authorization
-    const isAdmin = ((req.user?.role) ? String(req.user.role) : '').toLowerCase() === 'admin';
-    if (route.driver.toString() !== req.user?._id?.toString() && !isAdmin) {
-      console.log('Authorization failed:', { routeDriver: route.driver.toString(), currentUser: req.user?._id?.toString(), role: req.user?.role });
-      return res.status(401).json({ success: false, msg: 'Not authorized to add students to this route' });
+    if (req.user) {
+      const isAdmin = String(req.user.role || '').toLowerCase() === 'admin';
+      if (String(route.driver) !== String(req.user._id) && !isAdmin) {
+        console.log('Authorization failed for logged-in user:', { routeDriver: String(route.driver), currentUser: String(req.user._id), role: req.user.role });
+        return res.status(401).json({ success: false, msg: 'Not authorized to add students to this route' });
+      }
     }
-if  (mobileNumber && mobileNumber.trim() !== ''){
-  const existingStudent = await Student.findOne({ mobileNumber });
-  if (existingStudent) {
-    return res.status(400).json({ 
-      success: false, 
-      msg: 'Student with this mobile number already exists' 
-    });
-  }
-}
-    
-    const newStudent = await Student.create({
+    if (mobileNumber && mobileNumber.trim() !== '') {
+      const existingStudent = await Student.findOne({ mobileNumber });
+      if (existingStudent) {
+        return res.status(400).json({
+          success: false,
+          msg: 'Student with this mobile number already exists'
+        });
+      }
+    }
+
+      const newStudent = await Student.create({
       name,
       mobileNumber,
       parentMobileNumber,
@@ -221,31 +212,30 @@ if  (mobileNumber && mobileNumber.trim() !== ''){
     res.status(201).json({ success: true, data: newStudent });
   } catch (err) {
     console.error('Error adding student - Full error:', err);
-    
+
     // Handle duplicate key error (mobileNumber unique constraint)
     if (err.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Student with this mobile number already exists' 
+      return res.status(400).json({
+        success: false,
+        msg: 'Student with this mobile number already exists'
       });
     }
-    
+
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(e => e.message);
       console.log('Validation errors:', errors);
       return res.status(400).json({ success: false, msg: errors.join(', ') });
     }
-    
+
     // Handle CastError (invalid ObjectId)
     if (err.name === 'CastError') {
       return res.status(400).json({ success: false, msg: 'Invalid route id format' });
     }
-    
+
     console.error('Error adding student:', err);
     res.status(500).json({ success: false, msg: 'Server error while adding student' });
   }
 };
-
 
 exports.updateStudent = async (req, res, next) => {
   try {
@@ -263,22 +253,22 @@ exports.updateStudent = async (req, res, next) => {
 
     // Check for duplicate mobile number (excluding current student)
     if (req.body.mobileNumber && req.body.mobileNumber !== student.mobileNumber) {
-      const existingStudent = await Student.findOne({ 
+      const existingStudent = await Student.findOne({
         mobileNumber: req.body.mobileNumber,
         _id: { $ne: req.params.id }
       }).lean();
 
       if (existingStudent) {
-        return res.status(400).json({ 
-          success: false, 
-          msg: 'Another student with this mobile number already exists' 
+        return res.status(400).json({
+          success: false,
+          msg: 'Another student with this mobile number already exists'
         });
       }
     }
 
     const updatedStudent = await Student.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
+      req.params.id,
+      req.body,
       {
         new: true,
         runValidators: true
@@ -298,12 +288,12 @@ exports.updateStudent = async (req, res, next) => {
   } catch (err) {
     // Handle duplicate key error
     if (err.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Another student with this mobile number already exists' 
+      return res.status(400).json({
+        success: false,
+        msg: 'Another student with this mobile number already exists'
       });
     }
-    
+
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(e => e.message);
       return res.status(400).json({ success: false, msg: errors.join(', ') });
@@ -312,10 +302,6 @@ exports.updateStudent = async (req, res, next) => {
     res.status(500).json({ success: false, msg: 'Server error while updating student' });
   }
 };
-
-// @desc    Delete student
-// @route   DELETE /api/v1/students/:id
-// @access  Private
 exports.deleteStudent = async (req, res, next) => {
   try {
     const student = await Student.findById(req.params.id).populate('route').lean();
@@ -332,13 +318,17 @@ exports.deleteStudent = async (req, res, next) => {
 
     await Student.findByIdAndDelete(req.params.id);
 
+    // Invalidate cache
     invalidateCache.students(student.route._id);
 
-    // Emit real-time event
+    // Emit real-time event to all connected clients
     const io = req.app.get('io');
     if (io) {
-      const routeId = student.route._id.toString();
-      io.to(routeId).emit('studentDeleted', student._id, routeId);
+      io.emit('student:deleted', { 
+        studentId: req.params.id,
+        routeId: student.route._id,
+        deletedBy: req.user?.name || 'System'
+      });
     }
 
     res.status(200).json({ success: true, data: {} });
@@ -348,21 +338,18 @@ exports.deleteStudent = async (req, res, next) => {
   }
 };
 
-// @desc    Get students filtered by college with advanced pagination
-// @route   GET /api/v1/students
-// @access  Private/Admin
 exports.listStudents = async (req, res) => {
   try {
-    const { 
-      college, 
-      search, 
-      feeStatus, 
-      route, 
+    const {
+      college,
+      search,
+      feeStatus,
+      route,
       department,
-      sortBy = 'createdAt', 
+      sortBy = 'createdAt',
       sortOrder = 'desc',
     } = req.query;
-    
+
     const page = Math.max(parseInt(req.query.page || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit || '20', 10), 1), 100);
     const skip = (page - 1) * limit;
@@ -445,26 +432,23 @@ exports.listStudents = async (req, res) => {
   }
 };
 
-// @desc    Create a new student (global, by college)
-// @route   POST /api/v1/students
-// @access  Private/Admin
 exports.createStudent = async (req, res) => {
   try {
     // Check for duplicate mobile number
-    const existingStudent = await Student.findOne({ 
-      mobileNumber: req.body.mobileNumber 
+    const existingStudent = await Student.findOne({
+      mobileNumber: req.body.mobileNumber
     }).lean();
 
     if (existingStudent) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Student with this mobile number already exists' 
+      return res.status(400).json({
+        success: false,
+        msg: 'Student with this mobile number already exists'
       });
     }
 
     const newStudent = await Student.create(req.body);
     await newStudent.populate('route', 'routeName busNumber');
-    
+
     invalidateCache.students(newStudent.route);
 
     // Emit real-time event
@@ -474,12 +458,12 @@ exports.createStudent = async (req, res) => {
   } catch (err) {
     // Handle duplicate key error
     if (err.code === 11000) {
-      return res.status(400).json({ 
-        success: false, 
-        msg: 'Student with this mobile number already exists' 
+      return res.status(400).json({
+        success: false,
+        msg: 'Student with this mobile number already exists'
       });
     }
-    
+
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(e => e.message);
       return res.status(400).json({ success: false, msg: errors.join(', ') });
@@ -489,12 +473,34 @@ exports.createStudent = async (req, res) => {
   }
 };
 
-// Optimized export functions for large datasets
+exports.resetAllFees = async (req, res) => {
+  try {
+    const updateResult = await Student.updateMany(
+      {},
+      { $set: { feeStatus: 'Not Paid' } }
+    );
+
+    console.log(`Fees reset for ${updateResult.nModified} students.`);
+
+    // Invalidate the entire student cache since this is a global operation
+    invalidateCache.students();
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully reset fee status for ${updateResult.nModified} students.`,
+      data: { modifiedCount: updateResult.nModified },
+    });
+  } catch (err) {
+    console.error('Error resetting all student fees:', err);
+    res.status(500).json({ success: false, msg: 'Server error while resetting all fees.' });
+  }
+};
+
 exports.exportStudentsCSVForRoute = async (req, res) => {
   try {
     const route = await Route.findById(req.params.routeId).lean();
     if (!route) return res.status(404).json({ success: false, msg: 'Route not found' });
-    
+
     // Stream processing for large datasets
     const cursor = Student.find({ route: req.params.routeId })
       .populate('route', 'routeName')
@@ -503,16 +509,16 @@ exports.exportStudentsCSVForRoute = async (req, res) => {
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="route-${req.params.routeId}-students.csv"`);
-    
+
     // Write CSV header
     res.write('Name,Mobile,Department,Stop,Fee Status,College,Route\n');
-    
+
     // Stream data
     for (let student = await cursor.next(); student != null; student = await cursor.next()) {
       const row = `"${student.name}","${student.mobileNumber || ''}","${student.department || ''}","${student.stop || ''}","${student.feeStatus}","${student.college}","${student.route?.routeName || ''}"\n`;
       res.write(row);
     }
-    
+
     res.end();
   } catch (err) {
     console.error('Error exporting CSV:', err);
@@ -523,17 +529,17 @@ exports.exportStudentsCSVForRoute = async (req, res) => {
 exports.exportAllStudentsCSV = async (req, res) => {
   try {
     const cursor = Student.find().populate('route', 'routeName').lean().cursor();
-    
+
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="all-students.csv"');
-    
+
     res.write('Name,Mobile,Department,Stop,Fee Status,College,Route\n');
-    
+
     for (let student = await cursor.next(); student != null; student = await cursor.next()) {
       const row = `"${student.name}","${student.mobileNumber || ''}","${student.department || ''}","${student.stop || ''}","${student.feeStatus}","${student.college}","${student.route?.routeName || ''}"\n`;
       res.write(row);
     }
-    
+
     res.end();
   } catch (err) {
     console.error('Error exporting all students CSV:', err);
@@ -545,33 +551,33 @@ exports.exportStudentsPDFForRoute = async (req, res) => {
   try {
     const route = await Route.findById(req.params.routeId).lean();
     if (!route) return res.status(404).json({ success: false, msg: 'Route not found' });
-    
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="route-${req.params.routeId}-students.pdf"`);
-    
+
     const doc = new PDFDocument({ margin: 40 });
     doc.pipe(res);
-    
+
     doc.fontSize(18).text(`Students for Route: ${route.routeName}`, { underline: true });
     doc.moveDown();
-    
+
     // Stream processing for PDF
     const cursor = Student.find({ route: req.params.routeId })
       .populate('route', 'routeName')
       .lean()
       .cursor();
-    
+
     let index = 1;
     for (let student = await cursor.next(); student != null; student = await cursor.next()) {
       doc.fontSize(10).text(`${index}. ${student.name} | ${student.mobileNumber || ''} | ${student.department || ''} | ${student.stop || ''} | ${student.feeStatus}`);
       index++;
-      
+
       // Add new page every 50 students
       if (index % 50 === 0) {
         doc.addPage();
       }
     }
-    
+
     doc.end();
   } catch (err) {
     console.error('Error exporting PDF:', err);
@@ -583,27 +589,72 @@ exports.exportAllStudentsPDF = async (req, res) => {
   try {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="all-students.pdf"');
-    
+
     const doc = new PDFDocument({ margin: 40 });
     doc.pipe(res);
     doc.fontSize(18).text('All Students', { underline: true });
     doc.moveDown();
-    
+
     const cursor = Student.find().populate('route', 'routeName').lean().cursor();
-    
+
     let index = 1;
     for (let student = await cursor.next(); student != null; student = await cursor.next()) {
       doc.fontSize(10).text(`${index}. ${student.name} | ${student.mobileNumber || ''} | ${student.department || ''} | ${student.route?.routeName || ''} | ${student.feeStatus}`);
       index++;
-      
+
       if (index % 50 === 0) {
         doc.addPage();
       }
     }
-    
+
     doc.end();
   } catch (err) {
     console.error('Error exporting all students PDF:', err);
     return res.status(500).json({ success: false, msg: 'Error exporting PDF' });
+  }
+};
+
+exports.resetFeesForRoute = async (req, res) => {
+  try {
+    const { routeId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(routeId)) {
+      return res.status(400).json({ success: false, msg: 'Invalid route id' });
+    }
+
+    const route = await Route.findById(routeId);
+    if (!route) {
+      return res.status(404).json({ success: false, msg: 'Route not found' });
+    }
+
+    // Authorization: only admin or the driver of the route can reset fees
+    const isAdmin = ((req.user?.role) ? String(req.user.role) : '').toLowerCase() === 'admin';
+    if (route.driver.toString() !== req.user?._id?.toString() && !isAdmin) {
+      return res.status(401).json({ success: false, msg: 'Not authorized to reset fees for this route' });
+    }
+
+    const updateResult = await Student.updateMany(
+      { route: routeId },
+      { $set: { feeStatus: 'Not Paid' } }
+    );
+
+    console.log(`Fees reset for ${updateResult.nModified} students on route ${routeId}.`);
+
+    invalidateCache.students(routeId);
+
+    // Emit a real-time event to notify clients
+    const io = req.app.get('io');
+    if (io) {
+      io.to(routeId).emit('feesReset', { routeId, modifiedCount: updateResult.nModified });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully reset fee status for ${updateResult.nModified} students on this route.`,
+      data: { modifiedCount: updateResult.nModified },
+    });
+  } catch (err) {
+    console.error(`Error resetting fees for route ${req.params.routeId}:`, err);
+    res.status(500).json({ success: false, msg: 'Server error while resetting fees.' });
   }
 };

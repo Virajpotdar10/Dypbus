@@ -10,6 +10,7 @@ const {
   exportAllStudentsPDF,
   listStudents,
   createStudent,
+  resetFeesForRoute,
 } = require('../controllers/students');
 
 const router = express.Router({ mergeParams: true });
@@ -18,16 +19,13 @@ const { protect, admin } = require('../middleware/auth');
 const { cacheStudents } = require('../middleware/cache');
 
 router.route('/').get(protect, getStudents).post(protect, addStudent);
-
-// Export students for a single route (driver owner or admin)
 router.get('/export.csv', protect, exportStudentsCSVForRoute);
 router.get('/export.pdf', protect, exportStudentsPDFForRoute);
+router.post('/reset-fees', protect, resetFeesForRoute);
 
-// The following routes are on /api/v1/students/:id, not nested.
-// So we create a separate router for them.
 const studentRouter = express.Router();
 
-// Global students root: list and create (admin only)
+//  (admin only)
 studentRouter.route('/')
   .get(protect, admin, cacheStudents, listStudents)
   .post(protect, admin, createStudent);

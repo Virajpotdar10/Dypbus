@@ -5,21 +5,21 @@ const {
   updateUser,
   deleteUser,
   getDriversWithRoutesAndStudents,
+  unassignDriverFromRoutes,
 } = require('../controllers/users');
 
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-
-// All routes in this file are protected and admin-only
 router.use(protect);
 router.use(authorize('admin'));
 
-router.route('/')
-  .get(getUsers);
-
-// Get drivers with their routes and students (admin only)
 router.get('/drivers/full', getDriversWithRoutesAndStudents);
 
+
+router.post('/:id/unassign', unassignDriverFromRoutes);
+
+// GET /api/v1/users
+router.route('/').get(getUsers);
 router.route('/:id')
   .get(getUser)
   .put(updateUser)

@@ -1,17 +1,17 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import MainLayout from './MainLayout'; // Import the new layout
-
-// Lazy load components for better performance
-const DashboardScreen = React.lazy(() => import('../screens/DashboardScreen'));
+import MainLayout from './MainLayout'; 
 const StudentsScreen = React.lazy(() => import('../screens/StudentsScreen'));
+const ViewStudentScreen = React.lazy(() => import('../screens/ViewStudentScreen'));
+const DashboardScreen = React.lazy(() => import('../screens/DashboardScreen'));
 const AllStudentsScreen = React.lazy(() => import('../screens/AllStudentsScreen'));
 const LoginScreen = React.lazy(() => import('../screens/LoginScreen'));
+const AdminScreen = React.lazy(() => import('../screens/AdminScreen'));
+const StudentFormScreen = React.lazy(() => import('../screens/StudentFormScreen'));
+const ThankYouScreen = React.lazy(() => import('../screens/ThankYouScreen'));
 const RegisterScreen = React.lazy(() => import('../screens/RegisterScreen'));
 const ForgotPasswordScreen = React.lazy(() => import('../screens/ForgotPasswordScreen'));
-const AdminScreen = React.lazy(() => import('../screens/AdminScreen'));
 
-// Loading component
 const LoadingSpinner = () => (
   <div className="loading-container" style={{
     display: 'flex',
@@ -46,7 +46,6 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Error boundary for lazy loaded components
 class LazyErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -136,16 +135,26 @@ const AppRoutes = () => (
         <ForgotPasswordScreen />
       </LazyRoute>
     } />
+    <Route path="/route/:routeId" element={
+      <LazyRoute>
+        <StudentFormScreen />
+      </LazyRoute>
+    } />
+    <Route path="/thank-you" element={
+      <LazyRoute>
+        <ThankYouScreen />
+      </LazyRoute>
+    } />
     <Route path="/" element={
       <LazyRoute layout={MainLayout}>
         <DashboardScreen />
       </LazyRoute>
     } />
     <Route path="/route/:routeId/students" element={
-      <LazyRoute layout={MainLayout}>
-        <StudentsScreen />
-      </LazyRoute>
-    } />
+  <LazyRoute layout={MainLayout}>
+    <StudentsScreen />
+  </LazyRoute>
+} />
     <Route path="/all-students" element={
       <LazyRoute layout={MainLayout}>
         <AllStudentsScreen />

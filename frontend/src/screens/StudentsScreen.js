@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import API, { socket } from '../api'; // Use the centralized API instance and import socket
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus, FiChevronDown, FiEdit2, FiTrash2, FiArrowLeft, FiFilter, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus, FiChevronDown,FiRefreshCw , FiEdit2, FiTrash2, FiArrowLeft, FiFilter, FiDownload, FiChevronLeft, FiChevronRight,FiCopy,FiShare2 } from 'react-icons/fi';
 import { toast } from 'react-toastify'; 
 import './StudentsScreen.css';
 
@@ -23,17 +23,14 @@ const StudentsScreen = () => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPrevPage, setHasPrevPage] = useState(false);
-  // Add this line
 const [activeStudentId, setActiveStudentId] = useState(null);
-  // Filters
+  
   const [filters, setFilters] = useState({
     feeStatus: '',
     department: '',
@@ -49,14 +46,25 @@ const [activeStudentId, setActiveStudentId] = useState(null);
     feeStatus: 'Not Paid',
     college: 'DYPCET'
   });
-
-  const fetchStudents = useCallback(async (page = currentPage, search = searchTerm) => {
+const clearFilters = useCallback(() => {
+    setFilters({ feeStatus: '', department: '', college: '' });
+    setSearchTerm('');
+    setCurrentPage(1);
+}, []);
+  const fetchStudents = useCallback(async (page = currentPage, search = searchTerm, action = null) => {
     if (!routeId) return;
-    
+
     setLoading(true);
     setError(null);
-    
     try {
+      if (action === 'reset') {
+        await API.post(`/api/v1/routes/${routeId}/students/reset-fees`);
+        toast.success('All student fees have been reset to Not Paid.');
+        page = 1;
+        search = '';
+        clearFilters(); 
+      }
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pageSize.toString(),
@@ -69,12 +77,12 @@ const [activeStudentId, setActiveStudentId] = useState(null);
       });
 
       const { data } = await API.get(`/api/v1/routes/${routeId}/students?${params}`);
-      
+
       if (data.success) {
         setStudents(data.data || []);
         setRouteInfo(data.route || {});
         setStats(data.stats || { paid: 0, notPaid: 0 });
-        
+
         if (data.pagination) {
           setCurrentPage(data.pagination.page);
           setTotalPages(data.pagination.totalPages);
@@ -84,15 +92,15 @@ const [activeStudentId, setActiveStudentId] = useState(null);
         }
       }
     } catch (error) {
-      console.error('Error fetching students:', error);
-      setError('Failed to load students. Please try again.');
-      toast.error('Could not fetch students');
+      const errorMessage = action === 'reset' ? 'Could not reset fees.' : 'Could not fetch students.';
+      console.error(`Error during fetch/reset:`, error);
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [routeId, currentPage, pageSize, sortOption, sortOrder, filters, searchTerm]);
+  }, [routeId, currentPage, pageSize, sortOption, sortOrder, filters, searchTerm, clearFilters]);
 
-  // Inline debounced search using effect (replaces custom debounce hooks)
   useEffect(() => {
     const handler = setTimeout(() => {
       setCurrentPage(1);
@@ -107,11 +115,9 @@ const [activeStudentId, setActiveStudentId] = useState(null);
   useEffect(() => {
     if (!routeId) return;
 
-    // Connect the socket and join the room
+  
     socket.connect();
     socket.emit('joinRouteRoom', routeId);
-
-    // Listener for when a student is updated
     const handleStudentUpdate = (updatedStudent) => {
       if (updatedStudent.route === routeId) {
         setStudents((prevStudents) =>
@@ -120,8 +126,6 @@ const [activeStudentId, setActiveStudentId] = useState(null);
         toast.info(`Student ${updatedStudent.name} was updated.`);
       }
     };
-
-    // Listener for when a new student is added
     const handleStudentAdd = (newStudent) => {
       if (newStudent.route === routeId) {
         setStudents((prevStudents) => [...prevStudents, newStudent]);
@@ -130,7 +134,7 @@ const [activeStudentId, setActiveStudentId] = useState(null);
       }
     };
 
-    // Listener for when a student is deleted
+ 
     const handleStudentDelete = (deletedStudentId, studentRouteId) => {
       if (studentRouteId === routeId) {
         setStudents((prevStudents) =>
@@ -156,39 +160,70 @@ const [activeStudentId, setActiveStudentId] = useState(null);
   }, [routeId]);
   const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    const url = isEditing ? `/api/v1/students/${isEditing._id}` : `/api/v1/routes/${routeId}/students`;
-    const method = isEditing ? 'put' : 'post';
-// Add this line for debugging
-      console.log('Submitting student data:', form);
-    try {
-      const { data } = await API[method](url, form);
-      if (data.success) {
-        if (isEditing) {
-          toast.success('Student updated successfully!');
-          // Update local state immediately for better UX
-          setStudents(prev => prev.map(student => 
-            student._id === isEditing._id ? data.data : student
-          ));
-        } else {
-          toast.success('Student added successfully!');
-          // Add to local state immediately for better UX
-          setStudents(prev => [...prev, data.data]);
-          setTotalStudents(prev => prev + 1);
-        }
-        closeModal();
+const handleFormSubmit = async (e) => {
+  e.preventDefault();
+
+  // --- Validation ---
+  const requiredFields = ['name', 'mobileNumber', 'parentMobileNumber', 'department', 'year', 'college', 'stop'];
+  for (const field of requiredFields) {
+    if (!form[field] || form[field].trim() === '') {
+      toast.error(`Please fill out the ${field.replace(/([A-Z])/g, ' $1')} field.`);
+      return;
+    }
+  }
+
+  setLoading(true);
+  setError(null);
+
+  // --- Capitalization ---
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  const processedForm = {
+    ...form,
+    name: form.name.split(' ').map(capitalize).join(' '),
+    stop: form.stop.split(' ').map(capitalize).join(' '),
+  };
+  
+  const url = isEditing ? `/api/v1/students/${isEditing._id}` : `/api/v1/routes/${routeId}/students`;
+  const method = isEditing ? 'put' : 'post';
+  try {
+    const { data } = await API[method](url, processedForm);
+    if (data.success) {
+      toast.success(`Student ${isEditing ? 'updated' : 'added'} successfully!`);
+      if (isEditing) {
+        setStudents(prev => prev.map(student => student._id === isEditing._id ? data.data : student));
+      } else {
+        setStudents(prev => [...prev, data.data]);
+        setTotalStudents(prev => prev + 1);
       }
-    } catch (error) {
-      console.error('Error saving student:', error);
-      const errorMsg = error.response?.data?.msg || `Could not ${isEditing ? 'update' : 'add'} student`;
-      setError(errorMsg);
-      toast.error(errorMsg);
-    } finally {
-      setLoading(false);
+      closeModal();
+    }
+  } catch (error) {
+    console.error('Error saving student:', error);
+    const errorMsg = error.response?.data?.msg || `Could not ${isEditing ? 'update' : 'add'} student`;
+    setError(errorMsg);
+    toast.error(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
+const copyToClipboard = () => {
+    const link = `${window.location.origin}/route/${routeId}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Registration link copied to clipboard!');
+  };
+
+// Add this function right after it:
+  const handleShare = () => {
+    const link = `${window.location.origin}/route/${routeId}`;
+    if (navigator.share) {
+      navigator.share({
+        title: `Bus Route: ${routeInfo.routeName}`,
+        text: `Student registration link for route: ${routeInfo.routeName}`,
+        url: link,
+      })
+      .catch((error) => console.error('Error sharing', error));
+    } else {
+      toast.info('Sharing is not supported on this device.');
     }
   };
 
@@ -210,6 +245,7 @@ const [activeStudentId, setActiveStudentId] = useState(null);
     }
     setShowModal(true);
   };
+  
 
   const closeModal = () => {
     setShowModal(false); // Correctly close the add/edit modal
@@ -250,7 +286,7 @@ const [activeStudentId, setActiveStudentId] = useState(null);
       await API.delete(`/api/v1/students/${studentToDelete._id}`);
       toast.success('Student deleted successfully!');
       closeDeleteModal();
-      fetchStudents(); // Refresh current page
+      fetchStudents(); 
     } catch (error) {
       console.error('Error deleting student:', error);
       toast.error('Could not delete student');
@@ -282,12 +318,6 @@ const [activeStudentId, setActiveStudentId] = useState(null);
 
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => ({ ...prev, [filterType]: value }));
-    setCurrentPage(1);
-  };
-
-  const clearFilters = () => {
-    setFilters({ feeStatus: '', department: '', college: '' });
-    setSearchTerm('');
     setCurrentPage(1);
   };
 
@@ -338,7 +368,17 @@ const [activeStudentId, setActiveStudentId] = useState(null);
           <button onClick={() => exportStudents('pdf')} title="Export PDF" className="export-button">
             <FiDownload /> PDF
           </button>
+          <button onClick={() => {if (window.confirm('Are you sure you want to reset fees for all students? This cannot be undone.')) {fetchStudents(1, null, 'reset');}}} className="export-button">
+            <FiRefreshCw /> Reset Fees
+          </button>
+          <button onClick={copyToClipboard} title="Copy Registration Link" className="export-button">
+          <FiCopy /> Copy Link
+        </button>
+          <button onClick={handleShare} title="Share Registration Link" className="export-button">
+    <FiShare2 /> Share
+  </button>
         </div>
+        
       </header>
 
       <main className="students-main">
@@ -448,7 +488,7 @@ const [activeStudentId, setActiveStudentId] = useState(null);
               </div>
             ) : (
               students.map(student => (
-                // Inside the students.map(...)
+           
 <StudentCard 
   key={student._id} 
   student={student} 
@@ -456,7 +496,7 @@ const [activeStudentId, setActiveStudentId] = useState(null);
   onToggleDetails={() => toggleStudentDetails(student._id)}
   onEdit={() => openModal(student)}
   onDelete={() => openDeleteModal(student)}
-  onToggleFee={() => handleToggleFeeStatus(student)} // <-- Add this prop
+  onToggleFee={() => handleToggleFeeStatus(student)} 
 />
               ))
             )}
@@ -633,7 +673,7 @@ const StudentCard = ({ student, isActive, onToggleDetails, onEdit, onDelete, onT
         <span className="student-mobile">{student.mobileNumber}</span>
       </div>
       <div className="student-card-actions">
-        <span className={`fee-status ${student.feeStatus === 'Paid' ? 'paid' : 'not-paid'}`}>\
+        <span className={`fee-status ${student.feeStatus === 'Paid' ? 'paid' : 'not-paid'}`}>
           {student.feeStatus}
         </span>
         <button className="details-toggle">

@@ -1,0 +1,41 @@
+.confirmation-modal {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px;
+    border-top: 5px solid #f59e0b; /* Warning color */
+  }
+  
+  .confirmation-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .confirmation-modal .modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #d97706; /* Darker warning color */
+    font-size: 1.25rem;
+  }
+  
+  .confirmation-modal .modal-body {
+    padding: 1.5rem;
+    font-size: 1rem;
+    color: #4b5563;
+  }
+  
+  .confirmation-modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }

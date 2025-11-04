@@ -1,9 +1,9 @@
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import axios from 'axios';
 import { FiUsers, FiSearch, FiPlus, FiFilter, FiDownload, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import 'jspdf-autotable';
 import './AllStudentsScreen.css';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
 
 const COLLEGES = ['All', 'DYPCET', 'DYPSEM', 'Diploma'];
