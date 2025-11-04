@@ -2,7 +2,6 @@ import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './MainLayout'; 
 const StudentsScreen = React.lazy(() => import('../screens/StudentsScreen'));
-const ViewStudentScreen = React.lazy(() => import('../screens/ViewStudentScreen'));
 const DashboardScreen = React.lazy(() => import('../screens/DashboardScreen'));
 const AllStudentsScreen = React.lazy(() => import('../screens/AllStudentsScreen'));
 const LoginScreen = React.lazy(() => import('../screens/LoginScreen'));
