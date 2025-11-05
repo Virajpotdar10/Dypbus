@@ -44,10 +44,9 @@ const StudentSchema = new mongoose.Schema({
     ref: 'Route',
     required: true
   },
-  year: {
+   year: {
     type: String,
-    enum: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
-    default: '1st Year'
+    enum: ['1st Year', '2nd Year', '3rd Year', '4th Year']
   }
 }, { timestamps: true });
 

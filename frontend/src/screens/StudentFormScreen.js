@@ -46,7 +46,7 @@ const StudentFormScreen = () => {
     let processedValue = value;
 
     // Capitalize first letter of each word for specified fields
-    if (['firstName', 'middleName', 'lastName', 'year', 'stop'].includes(name)) {
+    if (['firstName', 'middleName', 'lastName', 'stop'].includes(name)) {
       processedValue = value
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -66,14 +66,14 @@ const StudentFormScreen = () => {
       .join(' ');
 
     const submissionData = {
-      name: fullName,
-      mobileNumber: form.mobileNumber,
-      parentMobileNumber: form.parentMobileNumber,
-      department: form.department,
-      year: form.year,
-      college: form.college,
-      stop: form.stop,
-    };
+  name: fullName,
+  mobileNumber: form.mobileNumber,
+  parentMobileNumber: form.parentMobileNumber,
+  department: form.department,
+  year: form.year,
+  college: form.college,
+  stop: form.stop,
+};
 
     try {
       const { data } = await API.post(`/api/v1/routes/${routeId}/students`, submissionData);
@@ -111,7 +111,13 @@ const StudentFormScreen = () => {
               <option value="DYPSEM">DYPSEM</option>
               <option value="Diploma">Diploma</option>
             </select>
-            <input name="year" value={form.year} onChange={handleFormChange} placeholder="Year (e.g., FY, SY, TY...)" required />
+            <select name="year" value={form.year} onChange={handleFormChange}>
+              <option value="">Select Year</option>
+              <option value="1st Year">First Year</option>
+              <option value="2nd Year">Second Year</option>
+              <option value="3rd Year">Third Year</option>
+              <option value="4th Year">Final Year</option>
+            </select>
 
             <select
               name="department"

@@ -164,7 +164,7 @@ const handleFormSubmit = async (e) => {
   e.preventDefault();
 
   // --- Validation ---
-  const requiredFields = ['name', 'mobileNumber', 'parentMobileNumber', 'department', 'year', 'college', 'stop'];
+  const requiredFields = ['name', 'mobileNumber', 'parentMobileNumber', 'department', 'college', 'stop'];
   for (const field of requiredFields) {
     if (!form[field] || form[field].trim() === '') {
       toast.error(`Please fill out the ${field.replace(/([A-Z])/g, ' $1')} field.`);

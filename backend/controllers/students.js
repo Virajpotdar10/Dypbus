@@ -672,10 +672,10 @@ exports.createPublicStudent = async (req, res, next) => {
       return res.status(400).json({ success: false, msg: 'Invalid route id' });
     }
 
-    if (!name || !department || !stop || !year) {
+    if (!name || !department || !stop) {
       return res.status(400).json({
         success: false,
-        msg: 'Please provide all required fields: name, department, stop, and year'
+        msg: 'Please provide all required fields: name, department, and stop'
       });
     }
 
@@ -694,17 +694,22 @@ exports.createPublicStudent = async (req, res, next) => {
       }
     }
 
-    const newStudent = await Student.create({
+    const studentData = {
       name,
       mobileNumber,
       parentMobileNumber,
       department,
-      year,
       stop,
       college: college || 'DYPCET',
       feeStatus: 'Not Paid',
       route: routeId
-    });
+    };
+
+    if (year) {
+      studentData.year = year;
+    }
+
+    const newStudent = await Student.create(studentData);
 
     invalidateCache.students(routeId);
 
