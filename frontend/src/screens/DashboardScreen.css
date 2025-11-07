@@ -117,7 +117,7 @@ header[style*="background-color: rgb(0, 32, 91)"] {
 .user-info {
   background-color: #f0f2ff;
   border: 1px solid #e0e7ff;
-  padding: 0.5rem 4.2rem;
+  padding: 0.5rem 1.5rem;
   border-radius: 24px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -796,54 +796,86 @@ header[style*="background-color: rgb(0, 32, 91)"] {
   .header h3 {
     font-size: 1.4rem;
   }
+.user-info {
+    padding: 0.2rem 2rem;
+    font-size: 0.9rem;
+}
+
+.logout-button {
+    font-size: 0.9rem;
+    padding: 1.2rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.btn-gradient-professional {
+    font-size: 0.9rem;
+    padding: 1.2rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+
 
 }
 
 /* --- For mobile (<= 480px) --- */
+/* === MOBILE (<= 480px) === */
 @media (max-width: 480px) {
-  .main-content {
-    padding: 0.75rem;
-  }
+
+  .main-content { padding: 0.8rem; margin: 0 auto; max-width: 98%; }
 
   .header {
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-  }
-
-  .user-info {
-    padding: 0.2rem 2rem;
-    font-size: 0.9rem;
-  }
-
-  .primary-button,
-  .logout-button {
-    font-size: 0.9rem;
-    padding: 1.2rem;
-    width: 100%;
-  }
-
-  .header-controls {
-    gap: 0.5rem;
-  }
-
-}
-
-/* --- For small devices (<= 360px) --- */
-@media (max-width: 360px) {
-  .header {
-    padding: 0.5rem;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.8rem;
+    gap: 0.8rem;
   }
 
   .header h1,
   .header h2,
   .header h3 {
-    font-size: 1.2rem;
+    font-size: 1.2rem;   /* smaller than tablet */
+  }
+
+  .header-controls { justify-content: center; width: 100%; gap: 0.6rem; }
+
+  .primary-button,
+  .logout-button,
+  .btn-gradient-professional {
+    width: 100%;
+    max-width: 260px;    /* smaller than tablet */
+    font-size: 0.85rem;
+    padding: 0.9rem;
+  }
+
+  .user-info { padding: 0.2rem 1.5rem; font-size: 0.85rem; }
+}
+
+
+/* === VERY SMALL MOBILES (<= 360px) === */
+@media (max-width: 360px) {
+
+  .main-content { padding: 0.6rem; max-width: 99%; }
+
+  .header { padding: 0.6rem; gap: 0.6rem; }
+
+  .header h1,
+  .header h2,
+  .header h3 {
+    font-size: 1rem;  /* even smaller */
   }
 
   .primary-button,
-  .logout-button {
-    font-size: 0.85rem;
-    padding: 0.6rem 0.9rem;
+  .logout-button,
+  .btn-gradient-professional {
+    max-width: 220px;
+    font-size: 0.8rem;
+    padding: 0.7rem;
   }
 
+  .user-info { padding: 0.15rem 1rem; font-size: 0.8rem; }
 }

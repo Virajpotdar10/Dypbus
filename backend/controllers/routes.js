@@ -30,8 +30,13 @@ exports.getRoutes = async (req, res, next) => {
 };
 exports.createRoute = async (req, res, next) => {
   try {
-    // Add driver to req.body
-    req.body.driver = req.driver._id;
+   
+    const isAdmin = (req.user?.role || '').toLowerCase() === 'admin';
+    if (isAdmin && req.body.driver) {
+      // Admin is creating a route and has assigned a driver
+    } else {
+      req.body.driver = req.user._id;
+    }
 
     const route = await Route.create(req.body);
     await route.populate('driver', 'name email');
@@ -72,7 +77,7 @@ exports.updateRoute = async (req, res, next) => {
     const isAdmin = ((req.user && req.user.role) ? String(req.user.role) : '').toLowerCase() === 'admin';
 
     // Make sure driver owns route or is admin
-    if (route.driver.toString() !== req.driver._id.toString() && !isAdmin) {
+    if (route.driver && route.driver.toString() !== req.driver._id.toString() && !isAdmin) {
       return res.status(401).json({ success: false, msg: 'Not authorized to update this route' });
     }
 
@@ -106,7 +111,7 @@ exports.deleteRoute = async (req, res, next) => {
     const isAdmin = ((req.user && req.user.role) ? String(req.user.role) : '').toLowerCase() === 'admin';
 
     // Make sure driver owns route or is admin
-    if (route.driver.toString() !== req.driver._id.toString() && !isAdmin) {
+    if (route.driver && route.driver.toString() !== req.driver._id.toString() && !isAdmin) {
       return res.status(401).json({ success: false, msg: 'Not authorized to delete this route' });
     }
 

@@ -90,13 +90,8 @@ const DashboardScreen = () => {
     });
 
     setSocket(newSocket);
-
-    // Listen for 'connect' event
     newSocket.on('connect', () => {
-      console.log('Socket.IO connected successfully!');
     });
-
-    // Route events
     newSocket.on('route:created', ({ route }) => {
       setRoutes(prev => {
         if (prev.some(r => r._id === route._id)) return prev;
@@ -155,11 +150,21 @@ const DashboardScreen = () => {
         body.driver = selectedDriverId;
       }
 
-      const { data } = await API.post('/api/v1/routes', body);
+           const { data } = await API.post('/api/v1/routes', body);
+
+      // Manually construct the new route object with the full driver details
+      const newRoute = { ...data.data };
+      if (selectedDriverId) {
+        const driverDetails = drivers.find(d => d._id === selectedDriverId);
+        if (driverDetails) {
+          newRoute.driver = driverDetails;
+        }
+      }
+
       setRoutes(prev => {
-        const exists = prev.some(route => route._id === data.data._id);
+        const exists = prev.some(route => route._id === newRoute._id);
         if (exists) return prev;
-        return [...prev, data.data];
+        return [...prev, newRoute];
       });
       setRouteName('');
       setSelectedDriverId('');
@@ -169,7 +174,7 @@ const DashboardScreen = () => {
       setSuccess('Route added successfully!');
     } catch (error) {
       console.error('Error adding route:', error.response?.data || error.message);
-      // Use the specific error message from the backend for the notification
+
       setError(error.response?.data?.msg || 'Could not add route');
       setTimeout(() => setError(''), 5000);
     }
@@ -380,7 +385,7 @@ const RouteCard = ({ route, onOpenDeleteModal, userRole, onDownloadPDF }) => {
         {route.routeName}
         {route.busNumber && ` - Bus ${route.busNumber}`}
       </h4>
-      {userRole && userRole.toLowerCase() === 'admin' && route.driver && (
+      {route.driver && (
         <p className="driver-name">Driver: {route.driver.name}</p>
       )}
       <div className="card-actions">
@@ -583,9 +588,9 @@ const AddRouteModal = ({ show, onClose, onAddRoute, routeName, setRouteName, use
       <div className="modal-content">
         <h3>Add New Route{routeNumber ? ` (Route ${routeNumber})` : ''}</h3>
         <form onSubmit={onAddRoute}>
-          <div className="input-group">
+                   <div className="input-group">
             <label className="input-label">Route Name</label>
-            <input type="text" value={routeName} onChange={(e) => setRouteName(e.target.value)} required className="input" />
+            <input type="text" value={routeName} onChange={(e) => setRouteName(e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1))} required className="input" />
           </div>
 
           <div className="input-group">
@@ -597,10 +602,10 @@ const AddRouteModal = ({ show, onClose, onAddRoute, routeName, setRouteName, use
             <label className="input-label">Bus Number</label>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <span className="input-prefix">MH09</span>
-              <input
+                            <input
                 type="text"
                 value={busNumberDigits}
-                onChange={(e) => setBusNumberDigits(e.target.value)}
+                onChange={(e) => setBusNumberDigits(e.target.value.toUpperCase())}
                 className="input"
                 placeholder="Enter letters and digits"
                 required

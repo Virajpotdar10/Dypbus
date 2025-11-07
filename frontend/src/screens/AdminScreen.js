@@ -283,6 +283,7 @@ const TabButton = ({ name, count, activeTab, setActiveTab, icon }) => (
     {count > 0 && <span className="count-badge">{count}</span>}
   </button>
 );
+
 const StudentsTab = ({ students, routes, fetchData }) => {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [filters, setFilters] = useState({ route: 'All', search: '' });
@@ -296,11 +297,11 @@ const StudentsTab = ({ students, routes, fetchData }) => {
   };
   const handleDelete = async (studentId) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
-       try {
-    await API.delete(`/api/v1/students/${studentId}`);
-  } catch (error) {
-    console.error('Failed to delete student', error);
-  }
+      try {
+        await API.delete(`/api/v1/students/${studentId}`);
+      } catch (error) {
+        console.error('Failed to delete student', error);
+      }
     }
   };
   const handleResetFees = async () => {
@@ -335,19 +336,23 @@ const StudentsTab = ({ students, routes, fetchData }) => {
       alert(`Could not export ${format}. Please try again.`);
     }
   };
-  const filteredStudents = students.filter(student => {
-    const searchMatch = filters.search
-      ? student.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      student.department.toLowerCase().includes(filters.search.toLowerCase()) ||
-      student.mobileNumber.includes(filters.search)
-      : true;
 
-    const routeMatch = filters.route !== 'All'
-      ? student.route?._id === filters.route
-      : true;
+  const filteredStudents = React.useMemo(() => {
+    return students.filter(student => {
+      const searchMatch = filters.search
+        ? student.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        student.department.toLowerCase().includes(filters.search.toLowerCase()) ||
+        student.mobileNumber.includes(filters.search)
+        : true;
 
-    return searchMatch && routeMatch;
-  });
+      const routeMatch = filters.route !== 'All'
+        ? student.route?._id === filters.route
+        : true;
+
+      return searchMatch && routeMatch;
+    });
+  }, [students, filters]);
+
   useEffect(() => {
     const counts = {
       DYPCET: 0,
@@ -496,8 +501,32 @@ const StudentsTab = ({ students, routes, fetchData }) => {
   );
 };
 
-
 const RoutesTab = ({ routes, drivers, fetchData }) => {
+  const [editingRouteId, setEditingRouteId] = useState(null);
+  const [selectedDriverId, setSelectedDriverId] = useState('');
+
+  const handleEdit = (route) => {
+    setEditingRouteId(route._id);
+    setSelectedDriverId(route.driver?._id || '');
+  };
+
+  const handleCancel = () => {
+    setEditingRouteId(null);
+    setSelectedDriverId('');
+  };
+const handleSave = async (routeId) => {
+    try {
+      const payload = {
+        driver: selectedDriverId ? selectedDriverId : null
+      };
+        await API.put(`/api/v1/routes/${routeId}`, payload);
+      fetchData();
+      handleCancel();
+    } catch (error) {
+      console.error('Failed to update driver for route', error);
+      alert(`Error: Could not update driver. ${error.response?.data?.msg || error.message}`);
+    }
+  };
   const copyToClipboard = (routeId) => {
     const link = `${window.location.origin}/route/${routeId}`;
     navigator.clipboard.writeText(link).then(() => {
@@ -507,6 +536,7 @@ const RoutesTab = ({ routes, drivers, fetchData }) => {
       alert('Failed to copy link.');
     });
   };
+
   const handleDelete = async (routeId) => {
     if (window.confirm('Are you sure you want to delete this route? This will also unassign all students from it.')) {
       try {
@@ -539,9 +569,24 @@ const RoutesTab = ({ routes, drivers, fetchData }) => {
               <tr key={route._id}>
                 <td data-label="Route Name">{route.routeName}</td>
                 <td data-label="Driver">
-                  <span className={`driver-tag ${route.driver ? '' : 'no-driver'}`}>
-                    {route.driver?.name || 'Not Assigned'}
-                  </span>
+                  {editingRouteId === route._id ? (
+                    <select
+                      value={selectedDriverId}
+                      onChange={(e) => setSelectedDriverId(e.target.value)}
+                      className="driver-select"
+                    >
+                      <option value="">Not Assigned</option>
+                      {drivers.map(driver => (
+                        <option key={driver._id} value={driver._id}>
+                          {driver.name} ({driver.email})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className={`driver-tag ${route.driver ? '' : 'no-driver'}`}>
+                      {route.driver?.name || 'Not Assigned'}
+                    </span>
+                  )}
                 </td>
                 <td data-label="Capacity">{route.capacity}</td>
                 <td data-label="Link">
@@ -551,9 +596,21 @@ const RoutesTab = ({ routes, drivers, fetchData }) => {
                 </td>
                 <td data-label="Actions">
                   <div className="action-buttons">
-                    <button onClick={() => handleDelete(route._id)} className="btn-icon btn-delete" title="Delete">
-                      <FiTrash2 />
-                    </button>
+                    {editingRouteId === route._id ? (
+                      <>
+                        <button onClick={() => handleSave(route._id)} className="btn btn-primary btn-sm">Save</button>
+                        <button onClick={handleCancel} className="btn btn-secondary btn-sm">Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleEdit(route)} className="btn btn-icon btn-edit" title="Edit Driver">
+                          <FiEdit />
+                        </button>
+                        <button onClick={() => handleDelete(route._id)} className="btn-icon btn-delete" title="Delete">
+                          <FiTrash2 />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -583,7 +640,7 @@ const DriversTab = ({ drivers, fetchData }) => {
       setFormData({ name: driver.name, email: driver.email, password: '', role: driver.role });
     } else {
       setEditingDriver(null);
-      setFormData({ name: '', email: '', password: '', role: 'admin' });
+      setFormData({ name: '', email: '', password: '', role: 'driver' });
     }
     setIsModalOpen(true);
   };
@@ -734,7 +791,10 @@ const DriverFormModal = ({ formData, setFormData, handleSubmit, handleCloseModal
         <div className="form-grid">
           <div className="form-group">
             <label>Full Name</label>
-            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+            <input type="text" value={formData.name} onChange={(e) => {
+              const capitalize = (str) => str.replace(/\b\w/g, char => char.toUpperCase());
+              setFormData({ ...formData, name: capitalize(e.target.value) });
+            }} required />
           </div>
           <div className="form-group">
             <label>Email Address</label>

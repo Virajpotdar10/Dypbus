@@ -26,11 +26,11 @@ const StudentsScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize] = useState(20);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPrevPage, setHasPrevPage] = useState(false);
 const [activeStudentId, setActiveStudentId] = useState(null);
-  
+const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [filters, setFilters] = useState({
     feeStatus: '',
     department: '',
@@ -44,7 +44,8 @@ const [activeStudentId, setActiveStudentId] = useState(null);
     parentMobileNumber: '',
     stop: '',
     feeStatus: 'Not Paid',
-    college: 'DYPCET'
+    college: 'DYPCET',
+    year: ''
   });
 const clearFilters = useCallback(() => {
     setFilters({ feeStatus: '', department: '', college: '' });
@@ -237,11 +238,12 @@ const copyToClipboard = () => {
         department: student.department,
         stop: student.stop,
         feeStatus: student.feeStatus,
-        college: student.college || 'DYPCET'
+        college: student.college || 'DYPCET',
+        year: student.year || ''
       });
     } else {
       setIsEditing(null);
-      setForm({ name: '', mobileNumber: '',parentMobileNumber: '', department: '', stop: '', feeStatus: 'Not Paid', college: 'DYPCET' });
+      setForm({ name: '', mobileNumber: '',parentMobileNumber: '', department: '', stop: '', feeStatus: 'Not Paid', college: 'DYPCET', year: '' });
     }
     setShowModal(true);
   };
@@ -298,13 +300,6 @@ const copyToClipboard = () => {
       fetchStudents(newPage);
     }
   };
-
-  const handlePageSizeChange = (newSize) => {
-    setPageSize(newSize);
-    setCurrentPage(1);
-    fetchStudents(1);
-  };
-
   const handleSortChange = (newSort) => {
     if (newSort === sortOption) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -321,7 +316,10 @@ const copyToClipboard = () => {
     setCurrentPage(1);
   };
 
-  const exportStudents = async (format) => {
+    const exportStudents = async (format) => {
+    if (format === 'pdf') {
+      setIsExportingPdf(true);
+    }
     try {
       const { data } = await API.get(`/api/v1/routes/${routeId}/students/export.${format}`,
         { responseType: 'blob' }
@@ -333,6 +331,10 @@ const copyToClipboard = () => {
     } catch (err) {
       console.error('Export error:', err);
       toast.error(`Failed to export ${format.toUpperCase()}`);
+    } finally {
+      if (format === 'pdf') {
+        setIsExportingPdf(false);
+      }
     }
   };
 
@@ -365,8 +367,17 @@ const copyToClipboard = () => {
           <button onClick={() => exportStudents('csv')} title="Export CSV" className="export-button">
             <FiDownload /> CSV
           </button>
-          <button onClick={() => exportStudents('pdf')} title="Export PDF" className="export-button">
-            <FiDownload /> PDF
+                            <button 
+            onClick={() => exportStudents('pdf')} 
+            title="Export PDF" 
+            className="export-button"
+            disabled={isExportingPdf}
+          >
+            {isExportingPdf ? (
+              <div className="button-spinner"></div>
+            ) : (
+              <><FiDownload /> PDF</>
+            )}
           </button>
           <button onClick={() => {if (window.confirm('Are you sure you want to reset fees for all students? This cannot be undone.')) {fetchStudents(1, null, 'reset');}}} className="export-button">
             <FiRefreshCw /> Reset Fees
@@ -393,6 +404,28 @@ const copyToClipboard = () => {
               onChange={e => setSearchTerm(e.target.value)} 
               className="search-input"
             />
+          </div>
+
+          <div className="sort-dropdown-wrapper">
+            <button 
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className="sort-button"
+            >
+              <FiFilter />Sort By
+            </button>
+            {showSortDropdown && (
+              <div className="sort-dropdown">
+                {sortOptions.map(option => (
+                  <button
+                    key={option}
+                    onClick={() => handleSortChange(option)}
+                    className={`sort-option ${sortOption === option ? 'active' : ''}`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="filters-container">
@@ -421,46 +454,8 @@ const copyToClipboard = () => {
               Clear Filters
             </button>
           </div>
-
-          <div className="sort-dropdown-wrapper">
-            <button 
-              onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className="sort-button"
-            >
-              <FiFilter /> Sort by {sortOption} ({sortOrder})
-            </button>
-            {showSortDropdown && (
-              <div className="sort-dropdown">
-                {sortOptions.map(option => (
-                  <button
-                    key={option}
-                    onClick={() => handleSortChange(option)}
-                    className={`sort-option ${sortOption === option ? 'active' : ''}`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
-
-        {/* Page Size Selector */}
-        <div className="page-controls">
-          <div className="page-size-selector">
-            <label>Show: </label>
-            <select value={pageSize} onChange={e => handlePageSizeChange(Number(e.target.value))}>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span> per page</span>
-          </div>
-        </div>
-
-        {/* Loading and Error States */}
-        {loading && (
+    {loading && (
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Loading students...</p>
@@ -567,11 +562,34 @@ const copyToClipboard = () => {
             <h3>{isEditing ? 'Edit Student' : 'Add New Student'}</h3>
             <form onSubmit={handleFormSubmit}>
               <div className="modal-form-grid">
-              <ModalInput name="name" value={form.name} onChange={handleFormChange} placeholder="Full Name" required />
+              <ModalInput name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') })} placeholder="Full Name" required />
 <ModalInput name="mobileNumber" value={form.mobileNumber} onChange={handleFormChange} placeholder="Mobile Number" />
-<ModalInput name="department" value={form.department} onChange={handleFormChange} placeholder="Department" required />
+                <div className="modal-input-group-single">
+                  <label>Department</label>
+                  <select name="department" value={form.department} onChange={handleFormChange} required>
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CSE-AIML">CSE-AIML</option>
+                    <option value="CSE-DS">CSE-DS</option>
+                    <option value="ENTC">ENTC</option>
+                    <option value="MECHANICAL">MECHANICAL</option>
+                    <option value="CIVIL">CIVIL</option>
+                    <option value="CHEMICAL">CHEMICAL</option>
+                    <option value="ARCH">ARCHITECTURE</option>
+                  </select>
+                </div>
 <ModalInput name="stop" value={form.stop} onChange={handleFormChange} placeholder="Bus Stop" required />
 <ModalInput name="parentMobileNumber" value={form.parentMobileNumber} onChange={handleFormChange} placeholder="Parent Mobile Number" />
+                <div className="modal-input-group-single">
+                  <label>Year</label>
+                  <select name="year" value={form.year} onChange={handleFormChange} required>
+                    <option value="">Select Year</option>
+                    <option value="1st Year">First Year</option>
+                    <option value="2nd Year">Second Year</option>
+                    <option value="3rd Year">Third Year</option>
+                    <option value="4th Year">Final Year</option>
+                  </select>
+                </div>
                 {/* Fee status when editing existing student */}
                 {isEditing && (
                   <div className="modal-input-group">
@@ -688,6 +706,7 @@ const StudentCard = ({ student, isActive, onToggleDetails, onEdit, onDelete, onT
           <p><strong>College:</strong> {student.college}</p>
           <p><strong>Bus Stop:</strong> {student.stop}</p>
           <p><strong>Parent Mobile:</strong> {student.parentMobileNumber || 'N/A'}</p>
+          <p><strong>Year:</strong> {student.year || 'N/A'}</p>
         </div>
         <div className="details-actions">
           <button onClick={onEdit} className="btn btn-secondary"><FiEdit2 /> Edit</button>

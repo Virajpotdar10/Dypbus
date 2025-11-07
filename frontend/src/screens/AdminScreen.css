@@ -1836,7 +1836,24 @@
   .count-college {
     font-size: 0.8rem;
   }
+.header-left {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-title {
+    font-size: 1.25rem;
+    text-align: left;
+    align-items: left;
+    justify-content: left;
+  }
 }
+
 
 @media (max-width: 480px) {
   .counts-wrapper {

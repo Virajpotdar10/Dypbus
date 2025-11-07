@@ -11,10 +11,11 @@ const RegisterScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+const [isLoading, setIsLoading] = useState(false);
 
-
-  const registerHandler = async (e) => {
+    const registerHandler = async (e) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading
 
     if (password !== confirmPassword) {
       setPassword('');
@@ -22,6 +23,7 @@ const RegisterScreen = () => {
       setTimeout(() => {
         setError('');
       }, 5000);
+      setIsLoading(false); // Stop loading
       return setError('Passwords do not match');
     }
 
@@ -61,10 +63,18 @@ const RegisterScreen = () => {
       setTimeout(() => {
         setError('');
       }, 5000);
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 return (
   <div className="register-container">
+    {isLoading && (
+      <div className="loading-overlay">
+        <div className="loading-spinner"></div>
+        <p>Registering...</p>
+      </div>
+    )}
     <div className="register-overlay"></div>
     
     <div className="register-card">

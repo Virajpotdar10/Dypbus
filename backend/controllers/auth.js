@@ -4,11 +4,6 @@ const bcrypt = require('bcryptjs');
 const Driver = require('../models/Driver');
 const sendEmail = require('../utils/sendEmail');
 const { invalidateCache } = require('../middleware/cache');
-
-// Helper function to check if we should use mock data
-// const useMockData = () => global.USE_MOCK_DATA || false;
-
-// Helper to emit real-time events
 const emitDriverEvent = (req, eventType, data) => {
   const io = req.app.get('io');
   if (io) {
@@ -16,9 +11,6 @@ const emitDriverEvent = (req, eventType, data) => {
   }
 };
 
-// @desc    Register driver
-// @route   POST /api/v1/auth/register
-// @access  Public
 exports.register = async (req, res, next) => {
   const { name, email, password, role } = req.body;
 

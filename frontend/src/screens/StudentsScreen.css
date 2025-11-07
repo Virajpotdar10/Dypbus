@@ -11,7 +11,7 @@
   background-color: #1a237e;
   color: white;
   padding: 1rem 2rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,22 +22,26 @@
   align-items: center;
   gap: 1rem;
 }
+
 .header-stats {
   display: flex;
-  align-items: baseline; /* ensures baseline alignment for text */
+  align-items: baseline;
+  /* ensures baseline alignment for text */
   justify-content: flex-start;
   gap: 1.5rem;
   background-color: rgba(255, 255, 255, 0.1);
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  flex-wrap: wrap; /* allows wrapping if needed */
+  flex-wrap: wrap;
+  /* allows wrapping if needed */
 }
 
 /* Responsive for smaller screens */
 @media (max-width: 768px) {
   .header-stats {
     justify-content: center;
-    align-items: baseline; /* keep baseline alignment */
+    align-items: baseline;
+    /* keep baseline alignment */
     gap: 1rem;
     background-color: rgba(255, 255, 255, 0.15);
     padding: 0.75rem 1rem;
@@ -47,10 +51,12 @@
 /* Very small screens (≤ 480px) */
 @media (max-width: 480px) {
   .header-stats {
-    flex-direction: row; /* remain horizontal */
+    flex-direction: row;
+    /* remain horizontal */
     flex-wrap: wrap;
     justify-content: center;
-    align-items: baseline; /* ensures text stays aligned evenly */
+    align-items: baseline;
+    /* ensures text stays aligned evenly */
     gap: 0.75rem;
     padding: 0.5rem;
   }
@@ -83,7 +89,7 @@
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
-  
+
 }
 
 .back-link:hover {
@@ -93,7 +99,8 @@
 
 .header-title {
   margin: 0;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 1.25rem;
 }
 
 .header-actions {
@@ -104,7 +111,7 @@
 
 .export-button {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: white;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
@@ -130,7 +137,7 @@
   background-color: white;
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -161,7 +168,7 @@
   background-color: white;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   align-items: center;
 }
 
@@ -251,11 +258,13 @@
 }
 
 .sort-dropdown-wrapper {
-  position: relative;
+  position: normal;
+
+  align-items: center;
 }
 
 .sort-button {
-  padding: 10px 20px;
+  padding: 10px 10px;
   border: 2px solid #1a237e;
   border-radius: 8px;
   background-color: white;
@@ -268,7 +277,8 @@
   font-size: 14px;
   transition: all 0.3s ease;
   min-width: 180px;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
 }
 
 .sort-button:hover {
@@ -285,7 +295,7 @@
   background-color: white;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   z-index: 10;
   min-width: 200px;
   margin-top: 8px;
@@ -330,7 +340,7 @@
 .student-row {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   padding: 1rem 1.5rem;
   cursor: pointer;
@@ -342,7 +352,7 @@
 
 .student-row:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .student-info strong {
@@ -365,7 +375,7 @@
 .student-accordion {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
@@ -460,15 +470,20 @@
   width: 100%;
   max-width: 450px;
   background-color: white;
-  box-shadow: -5px 0 25px rgba(0,0,0,0.2);
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
   animation: slideIn 0.3s ease-out;
   display: flex;
   flex-direction: column;
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 .panel-header {
@@ -529,7 +544,7 @@
   background-color: #1a237e;
   color: white;
   border: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -544,7 +559,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -657,7 +672,7 @@
   padding: 1rem 1.5rem;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .page-size-selector {
@@ -706,7 +721,7 @@
   padding: 1.5rem;
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .pagination-info {
@@ -788,17 +803,34 @@
   box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
 }
 
-/* Loading and Error States */
 .loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 3rem;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  margin: 2rem 0;
+  align-items: center;
+  z-index: 999;
+}
+
+.loading-container .loading-spinner {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #1a237e; /* Match your theme color */
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+.loading-container p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #333;
 }
 
 .loading-spinner {
@@ -812,8 +844,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-container p {
@@ -831,7 +868,7 @@
   padding: 3rem;
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin: 2rem 0;
   border-left: 4px solid #ff6b6b;
 }
@@ -872,7 +909,7 @@
   padding: 3rem;
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin: 2rem 0;
   text-align: center;
 }
@@ -970,7 +1007,8 @@
     text-align: left;
   }
 
-  .accordion-header span, .accordion-header strong {
+  .accordion-header span,
+  .accordion-header strong {
     padding-bottom: 0.5rem;
   }
 
@@ -1110,6 +1148,7 @@
   justify-content: flex-end;
   gap: 0.75rem;
 }
+
 /* Responsive adjustments for StudentsScreen */
 
 body {
@@ -1170,6 +1209,7 @@ body {
 }
 
 @media (min-width: 600px) {
+
   .form-grid input[name="firstName"],
   .form-grid input[name="middleName"],
   .form-grid input[name="lastName"] {
@@ -1289,6 +1329,7 @@ body {
 }
 
 @media (min-width: 600px) {
+
   .form-grid input[name="firstName"],
   .form-grid input[name="middleName"],
   .form-grid input[name="lastName"] {
@@ -1354,6 +1395,130 @@ select:focus {
     padding: 1.5rem;
   }
 
+  .header-actions {
+  display: flex;
+  flex-direction: column; 
+  align-items: stretch; 
+  gap: 0.75rem; 
+  margin-bottom: 1rem;
+  width: 100%;
+}
+.export-button {
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 0.5rem;
+  padding: 0.75rem 1rem; 
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none; 
+}
+.export-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1.5rem; 
+  font-size: 1rem; 
+  font-weight: 600;
+  line-height: 1;
+  color: #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+}
+
+.export-button:hover {
+  transform: translateY(-2px); 
+  filter: brightness(1.1); 
+}
+.export-button[title="Export CSV"] {
+  background-color: #10B981;
+}
+.export-button[title="Export PDF"] {
+  background-color: #bc4b1b;
+}
+.export-button[title*="Reset"] {
+  background-color: #ff0000;
+}
+.export-button[title="Copy Registration Link"] {
+  background-color: #6366F1;
+}
+.export-button[title="Share Registration Link"] {
+  background-color: #0EA5E9;
+}
+
+ .driver-header {
+    display: flex;
+    flex-direction: column; /* Stacks the title and stats vertically */
+    align-items: center;    /* Ensures both items are centered */
+    padding: 1rem;
+    background-color: #1a237e;
+    color: white;
+  }
+.back-link {
+    /* Core layout for the icon + text inside the button */
+    display: flex;
+    align-items: center;      /* Vertically centers the icon and text */
+    justify-content: flex-start; 
+    gap: 0.5rem;
+    align-self: flex-start; 
+    margin-right: auto;
+    margin-bottom: 1rem;
+    background-color: #ff0000;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    background-color: #d60000; /* A slightly darker red for hover */
+  }
+  .header-title {
+    font-size: 1.25rem;  /* "Medium size text" (20px) */
+    font-weight: 500;   /* Medium weight */
+    margin: 0 0 0.75rem 0; /* Adds space *below* the title */
+    text-align: center;
+    white-space: nowrap;  /* Keeps it on one line */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+    .header-left {
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  /* 2. The Student Info (Bottom line) */
+.header-stats {
+    justify-content: center;
+    align-items: baseline;
+    /* keep baseline alignment */
+    gap: 1rem;
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 0.75rem 1rem;
+  }
+
+  /* Styles the individual stat items (icon + text) */
+  .header-stats span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
   .form-card {
     padding: 1.5rem;
     max-width: 95%;
@@ -1374,61 +1539,62 @@ select:focus {
   }
 }
 
-/* === Mobile fine-tuning === */
-@media (max-width: 480px) {
-  .student-form-container {
-    padding: 1rem;
+/* === MOBILE 480px === */
+@media (max-width:480px) {
+
+  .students-header { flex-direction: column; gap: 0.75rem; padding: 0.75rem; }
+  .students-main { padding: 0.8rem; }
+
+  .controls-container { flex-direction: column; padding: 0.8rem; gap: 0.75rem; }
+
+  .filter-select,
+  .clear-filters-btn {
+    min-width: 100px;     /* smaller than 768 */
+    flex: 1;
   }
 
-  .form-card {
-    padding: 1.2rem 1.4rem;
-    border-radius: 15px;
-    box-shadow: 0 6px 18px rgba(11, 30, 115, 0.1);
-  }
+  .sort-button { width: 100%; padding: 0.6rem 0.8rem; }
 
-  .form-title {
-    font-size: 1.25rem;
-  }
+  .pagination-container { padding: 0.8rem; }
+  .page-controls { gap: 0.75rem; }
 
-  .form-subtitle {
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-  }
+  .accordion-header { grid-template-columns: 1fr; gap: 0.4rem; }
+  .accordion-header .expand-icon { right: 1rem; top: 0.75rem; }
 
-  input,
-  select {
-    padding: 10px 12px;
-    font-size: 0.9rem;
-    border-radius: 8px;
-  }
+  .modal-form-grid { grid-template-columns: 1fr; }
 
-  .submit-btn {
-    font-size: 1rem;
-    padding: 14px;
-    border-radius: 10px;
-  }
+  .fab-add-student { bottom:0.8rem; right:0.8rem; }
 
-  .form-grid {
-    gap: 0.8rem;
-  }
+  .action-button { width:100%; font-size:0.9rem; padding:0.6rem 0.9rem;}
 }
 
-/* === Small Phones (below 360px width) === */
-@media (max-width: 360px) {
-  .form-card {
-    padding: 1rem;
+@media (max-width:360px) {
+
+  .students-header { padding: 0.5rem; gap: 0.5rem; }
+
+  .students-main { padding: 0.6rem; }
+
+  .controls-container { padding: 0.6rem; gap: 0.5rem; }
+
+  .filter-select,
+  .clear-filters-btn {
+    min-width: 90px;       
+    font-size: 0.8rem;
   }
 
-  .form-title {
-    font-size: 1.1rem;
-  }
+  .sort-button { font-size:0.8rem; padding:0.5rem 0.75rem; }
 
-  input,
-  select,
-  .submit-btn {
-    font-size: 0.85rem;
-  }
+  .pagination-container { padding: 0.6rem; }
+  .page-controls { gap: 0.5rem; }
+
+  .accordion-header { gap: 0.3rem; }
+  .accordion-header .expand-icon { right: 0.6rem; top: 0.5rem; }
+
+  .action-button { font-size:0.8rem; padding:0.5rem; }
+
+  .fab-add-student { bottom:0.5rem; right:0.5rem; width:48px;height:48px;font-size:20px; }
 }
+
 
 .success-message {
   text-align: center;
