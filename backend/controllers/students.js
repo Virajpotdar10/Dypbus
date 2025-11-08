@@ -7,8 +7,8 @@ const mongoose = require('mongoose'); // Import mongoose
 
 const emitStudentEvent = (req, eventType, data) => {
   const io = req.app.get('io');
-  if (io) {
-    io.emit(`student:${eventType}`, data);
+  if (io && data.routeId) {
+    io.to(data.routeId).emit(`student:${eventType}`, data);
   }
 };
 
@@ -66,12 +66,12 @@ exports.getStudents = async (req, res, next) => {
 
     // Determine sort order
     const sortDirection = sortOrder === 'desc' ? -1 : 1;
-    const sortField = ['name', 'department', 'feeStatus', 'createdAt', 'stop'].includes(sortBy) ? sortBy : 'createdAt';
+    const sortField = ['name', 'department', 'feeStatus', 'createdAt', 'stop', 'year'].includes(sortBy) ? sortBy : 'createdAt';
 
     // Execute optimized queries in parallel
     const [students, total, routeInfo, stats] = await Promise.all([
       Student.find(query)
-               .select('name mobileNumber parentMobileNumber department stop feeStatus college createdAt route')
+               .select('name mobileNumber parentMobileNumber department stop feeStatus college year createdAt route')
         .populate('route', 'routeName busNumber')
         .sort({ [sortField]: sortDirection })
         .skip(skip)
@@ -88,6 +88,7 @@ exports.getStudents = async (req, res, next) => {
             stop: student.stop,
             feeStatus: student.feeStatus,
             college: student.college,
+            year: student.year,
             createdAt: student.createdAt,
             route: student.route
           };
@@ -144,9 +145,10 @@ exports.getStudents = async (req, res, next) => {
 exports.addStudent = async (req, res, next) => {
   try {
     const { routeId } = req.params;
-    const { name, mobileNumber, parentMobileNumber, department, stop, college, feeStatus } = req.body;
+    // Destructure all fields from the body, including 'year'
+    const { name, mobileNumber, parentMobileNumber, department, stop, college, feeStatus, year } = req.body;
 
-    console.log('Student addition attempt:', { routeId, name, mobileNumber, department, stop });
+    console.log('Student addition attempt:', { routeId, name, mobileNumber, department, stop, year });
 
     // Validate routeId at the top to avoid CastError
     if (!mongoose.Types.ObjectId.isValid(routeId)) {
@@ -185,7 +187,8 @@ exports.addStudent = async (req, res, next) => {
       }
     }
 
-      const newStudent = await Student.create({
+    // Include 'year' in the object passed to Student.create
+    const newStudent = await Student.create({
       name,
       mobileNumber,
       parentMobileNumber,
@@ -193,27 +196,23 @@ exports.addStudent = async (req, res, next) => {
       stop,
       college: college || 'DYPCET',
       feeStatus: feeStatus || 'Not Paid',
-      route: routeId
+      route: routeId,
+      year // Ensure year is included here
     });
 
-    console.log('Student created successfully:', { id: newStudent._id, name: newStudent.name, route: routeId });
+    console.log('Student created successfully:', { id: newStudent._id, name: newStudent.name, route: routeId, year: newStudent.year });
 
     // Populate route info for response
     await newStudent.populate('route', 'routeName busNumber');
 
     invalidateCache.students(routeId);
 
-    // Emit real-time event
-    const io = req.app.get('io');
-    if (io) {
-      io.to(routeId).emit('studentAdded', newStudent);
-    }
+    emitStudentEvent(req, 'added', { student: newStudent, routeId });
 
     res.status(201).json({ success: true, data: newStudent });
   } catch (err) {
     console.error('Error adding student - Full error:', err);
 
-    // Handle duplicate key error (mobileNumber unique constraint)
     if (err.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -227,7 +226,6 @@ exports.addStudent = async (req, res, next) => {
       return res.status(400).json({ success: false, msg: errors.join(', ') });
     }
 
-    // Handle CastError (invalid ObjectId)
     if (err.name === 'CastError') {
       return res.status(400).json({ success: false, msg: 'Invalid route id format' });
     }
@@ -276,13 +274,7 @@ exports.updateStudent = async (req, res, next) => {
     ).populate('route', 'routeName busNumber');
 
     invalidateCache.students(updatedStudent.route._id);
-
-    // Emit real-time event
-    const io = req.app.get('io');
-    if (io) {
-      const routeId = updatedStudent.route._id.toString();
-      io.to(routeId).emit('studentUpdated', updatedStudent);
-    }
+emitStudentEvent(req, 'updated', { student: updatedStudent, routeId: updatedStudent.route._id.toString() });
 
     res.status(200).json({ success: true, data: updatedStudent });
   } catch (err) {
@@ -320,20 +312,12 @@ if (student.route) {
   // Invalidate cache for the specific route
   invalidateCache.students(student.route._id);
 } else {
-  // If no route, only an admin can delete, which is already checked by the route middleware
-  // No cache to invalidate if there's no route
+  
 }
 
 await Student.findByIdAndDelete(req.params.id);
-
-// Emit real-time event to all connected clients
-const io = req.app.get('io');
-if (io) {
-  io.emit('student:deleted', { 
-    studentId: req.params.id,
-    routeId: student.route ? student.route._id : null, // Safely access routeId
-    deletedBy: req.user?.name || 'System'
-  });
+if (student.route) {
+    emitStudentEvent(req, 'deleted', { studentId: req.params.id, routeId: student.route._id.toString() });
 }
 
     res.status(200).json({ success: true, data: {} });
@@ -713,10 +697,7 @@ exports.createPublicStudent = async (req, res, next) => {
 
     invalidateCache.students(routeId);
 
-    const io = req.app.get('io');
-    if (io) {
-      io.to(routeId).emit('studentAdded', newStudent);
-    }
+emitStudentEvent(req, 'added', { student: newStudent, routeId });
 
     res.status(201).json({ success: true, data: newStudent });
   } catch (err) {

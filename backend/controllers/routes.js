@@ -18,7 +18,7 @@ exports.getRoutes = async (req, res, next) => {
     if (isAdmin) {
       query = Route.find().populate('driver', '_id name email');
     } else {
-      query = Route.find({ driver: req.driver.id }).populate('driver', 'name email');
+      query = Route.find({ driver: req.user._id }).populate('driver', 'name email');
     }
 
     const routes = await query;

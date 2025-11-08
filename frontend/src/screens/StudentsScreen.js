@@ -119,45 +119,43 @@ const clearFilters = useCallback(() => {
   
     socket.connect();
     socket.emit('joinRouteRoom', routeId);
-    const handleStudentUpdate = (updatedStudent) => {
-      if (updatedStudent.route === routeId) {
-        setStudents((prevStudents) =>
-          prevStudents.map((s) => (s._id === updatedStudent._id ? updatedStudent : s))
-        );
-        toast.info(`Student ${updatedStudent.name} was updated.`);
-      }
-    };
-    const handleStudentAdd = (newStudent) => {
-      if (newStudent.route === routeId) {
-        setStudents((prevStudents) => [...prevStudents, newStudent]);
-        setTotalStudents((prev) => prev + 1);
-        toast.info(`New student ${newStudent.name} was added.`);
-      }
-    };
+const handleStudentUpdate = ({ student: updatedStudent }) => {
+  if (updatedStudent.route?._id === routeId || updatedStudent.route === routeId) {
+    setStudents((prevStudents) =>
+      prevStudents.map((s) => (s._id === updatedStudent._id ? updatedStudent : s))
+    );
+    toast.info(`Student ${updatedStudent.name} was updated.`);
+  }
+};
+const handleStudentAdd = ({ student: newStudent }) => {
+  if (newStudent.route?._id === routeId || newStudent.route === routeId) {
+    setStudents((prevStudents) => [...prevStudents, { ...newStudent, isNew: true }]);
+    setTotalStudents((prev) => prev + 1);
+    toast.success(`New student ${newStudent.name} was added.`);
+  }
+};
 
- 
-    const handleStudentDelete = (deletedStudentId, studentRouteId) => {
-      if (studentRouteId === routeId) {
-        setStudents((prevStudents) =>
-          prevStudents.filter((s) => s._id !== deletedStudentId)
-        );
-        setTotalStudents((prev) => prev - 1);
-        toast.warn('A student was deleted.');
-      }
-    };
+const handleStudentDelete = ({ studentId, routeId: studentRouteId }) => {
+  if (studentRouteId === routeId) {
+    setStudents((prevStudents) =>
+      prevStudents.filter((s) => s._id !== studentId)
+    );
+    setTotalStudents((prev) => prev - 1);
+    toast.warn('A student was deleted.');
+  }
+};
 
-    socket.on('studentUpdated', handleStudentUpdate);
-    socket.on('studentAdded', handleStudentAdd);
-    socket.on('studentDeleted', handleStudentDelete);
+socket.on('student:updated', handleStudentUpdate);
+socket.on('student:added', handleStudentAdd);
+socket.on('student:deleted', handleStudentDelete);
 
-    // Cleanup on component unmount
-    return () => {
-      socket.emit('leaveRouteRoom', routeId);
-      socket.off('studentUpdated', handleStudentUpdate);
-      socket.off('studentAdded', handleStudentAdd);
-      socket.off('studentDeleted', handleStudentDelete);
-      socket.disconnect();
-    };
+return () => {
+  socket.emit('leaveRouteRoom', routeId);
+  socket.off('student:updated', handleStudentUpdate);
+  socket.off('student:added', handleStudentAdd);
+  socket.off('student:deleted', handleStudentDelete);
+  socket.disconnect();
+};
   }, [routeId]);
   const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -488,6 +486,7 @@ const copyToClipboard = () => {
   key={student._id} 
   student={student} 
   isActive={activeStudentId === student._id}
+  isNew={student.isNew}
   onToggleDetails={() => toggleStudentDetails(student._id)}
   onEdit={() => openModal(student)}
   onDelete={() => openDeleteModal(student)}
@@ -683,8 +682,8 @@ const ModalInput = ({ name, ...props }) => (
     <input name={name} {...props}  />
   </div>
 );
-const StudentCard = ({ student, isActive, onToggleDetails, onEdit, onDelete, onToggleFee }) => (
-  <div className={`student-card-container ${isActive ? 'active' : ''}`}>
+const StudentCard = ({ student, isActive, isNew, onToggleDetails, onEdit, onDelete, onToggleFee }) => (
+  <div className={`student-card-container ${isActive ? 'active' : ''} ${isNew ? 'new' : ''}`}>
     <div className="student-card-header" onClick={onToggleDetails}>
       <div className="student-info">
         <span className="student-name">{student.name}</span>

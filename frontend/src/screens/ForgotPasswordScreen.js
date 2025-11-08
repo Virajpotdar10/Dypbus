@@ -7,9 +7,11 @@ const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const forgotPasswordHandler = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const config = {
       headers: {
@@ -25,7 +27,7 @@ const ForgotPasswordScreen = () => {
       );
 
       if (response && response.data && response.data.success) {
-        setSuccess(response.data.data);
+        setSuccess('OTP sent to your registered email.');
       } else {
         throw new Error('Invalid response from server');
       }
@@ -45,6 +47,8 @@ const ForgotPasswordScreen = () => {
       setTimeout(() => {
         setError('');
       }, 5000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,8 +107,8 @@ const ForgotPasswordScreen = () => {
             />
           </div>
           
-          <button type="submit" style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1a237e', color: 'white', border: 'none', borderRadius: '4px', fontSize: '1rem', cursor: 'pointer', marginBottom: '1rem' }}>
-            Send Reset Link
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1a237e', color: 'white', border: 'none', borderRadius: '4px', fontSize: '1rem', cursor: 'pointer', marginBottom: '1rem' }}>
+            {loading ? 'Sending...' : 'Send OTP'}
           </button>
 
           <div style={{ textAlign: 'center', fontSize: '0.9rem' }}>

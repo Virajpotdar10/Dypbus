@@ -7,9 +7,9 @@ const AllStudentsScreen = React.lazy(() => import('../screens/AllStudentsScreen'
 const LoginScreen = React.lazy(() => import('../screens/LoginScreen'));
 const AdminScreen = React.lazy(() => import('../screens/AdminScreen'));
 const StudentFormScreen = React.lazy(() => import('../screens/StudentFormScreen'));
-const ThankYouScreen = React.lazy(() => import('../screens/ThankYouScreen'));
 const RegisterScreen = React.lazy(() => import('../screens/RegisterScreen'));
 const ForgotPasswordScreen = React.lazy(() => import('../screens/ForgotPasswordScreen'));
+const ResetPasswordScreen = React.lazy(() => import('../screens/ResetPasswordScreen'));
 
 const LoadingSpinner = () => (
   <div className="loading-container" style={{
@@ -17,8 +17,8 @@ const LoadingSpinner = () => (
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh',
-    backgroundColor: '#f5f5f5'
+    height: 'calc(100vh - 70px)', // Adjust based on header height
+    width: '100%'
   }}>
     <div className="loading-spinner" style={{ textAlign: 'center' }}>
       <div className="spinner" style={{
@@ -110,9 +110,17 @@ class LazyErrorBoundary extends React.Component {
 // Lazy route wrapper component
 const LazyRoute = ({ children, layout: Layout }) => (
   <LazyErrorBoundary>
-    <Suspense fallback={<LoadingSpinner />}>
-      {Layout ? <Layout>{children}</Layout> : children}
-    </Suspense>
+    {Layout ? (
+      <Layout>
+        <Suspense fallback={<LoadingSpinner />}>
+          {children}
+        </Suspense>
+      </Layout>
+    ) : (
+      <Suspense fallback={<LoadingSpinner />}>
+        {children}
+      </Suspense>
+    )}
   </LazyErrorBoundary>
 );
 
@@ -129,6 +137,11 @@ const AppRoutes = () => (
         <RegisterScreen />
       </LazyRoute>
     } />
+    <Route path="/resetpassword/:resettoken" element={ // Add this route
+      <LazyRoute>
+        <ResetPasswordScreen />
+      </LazyRoute>
+    } />
     <Route path="/forgot-password" element={
       <LazyRoute>
         <ForgotPasswordScreen />
@@ -137,11 +150,6 @@ const AppRoutes = () => (
     <Route path="/route/:routeId" element={
       <LazyRoute>
         <StudentFormScreen />
-      </LazyRoute>
-    } />
-    <Route path="/thank-you" element={
-      <LazyRoute>
-        <ThankYouScreen />
       </LazyRoute>
     } />
     <Route path="/" element={

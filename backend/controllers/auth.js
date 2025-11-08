@@ -234,14 +234,11 @@ exports.forgotPassword = async (req, res, next) => {
 
     await driver.save({ validateBeforeSave: false });
 
-    // Create reset URL
-    const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
-
     const message = `
       <h1>You have requested a password reset</h1>
-      <p>Please go to this link to reset your password:</p>
-      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
-      <p>This link will expire in 30 minutes.</p>
+      <p>Your password reset token is:</p>
+      <h2>${resetToken}</h2>
+      <p>This token will expire in 30 minutes.</p>
     `;
 
     try {

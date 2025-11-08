@@ -11,7 +11,6 @@ const { Server } = require('socket.io');
 const { initializeCache } = require('./middleware/cache');
 const errorHandler = require('./middleware/error');
 
-// Load env vars
 dotenv.config({ path: './config/config.env' });
 
 // Validate essential environment variables

@@ -9,6 +9,8 @@ const StudentFormScreen = () => {
   const navigate = useNavigate();
   const [routeName, setRouteName] = useState('');
   const [loading, setLoading] = useState(true);
+const [isSubmitting, setIsSubmitting] = useState(false);
+const [submissionStatus, setSubmissionStatus] = useState(null); 
   const [form, setForm] = useState({
     firstName: '',
     middleName: '',
@@ -20,20 +22,22 @@ const StudentFormScreen = () => {
     college: 'DYPCET',
     stop: ''
   });
-  useEffect(() => {
-    const fetchRouteInfo = async () => {
+ useEffect(() => {
+  sessionStorage.setItem('isStudentForm', 'true');
+}, []);
+
+useEffect(() => {
+  const fetchRouteInfo = async () => {
       try {
         const { data } = await API.get(`/api/v1/routes/${routeId}`);
         if (data.success) {
           setRouteName(data.data.routeName);
         } else {
-          toast.error('Could not find the specified route.');
-          navigate('/');
+         toast.error('Could not find the specified route. Please check the link.');
         }
       } catch (error) {
         console.error('Failed to fetch route info', error);
-        toast.error('Invalid route link.');
-        navigate('/');
+        toast.error('Invalid or broken registration link.');
       } finally {
         setLoading(false);
       }
@@ -57,42 +61,62 @@ const StudentFormScreen = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setIsSubmitting(true);
+  setSubmissionStatus(null);
 
-    // Combine name fields into a single 'name' string
-    const fullName = [form.firstName, form.middleName, form.lastName]
-      .filter(Boolean) // Remove any empty parts
-      .join(' ');
+  const fullName = [form.firstName, form.middleName, form.lastName]
+    .filter(Boolean)
+    .join(' ');
 
-    const submissionData = {
-  name: fullName,
-  mobileNumber: form.mobileNumber,
-  parentMobileNumber: form.parentMobileNumber,
-  department: form.department,
-  year: form.year,
-  college: form.college,
-  stop: form.stop,
-};
-
-    try {
-      const { data } = await API.post(`/api/v1/routes/${routeId}/students`, submissionData);
-      if (data.success) {
-        toast.success('Registration successful!');
-        navigate('/thank-you');
-      }
-    } catch (error) {
-      console.error('Failed to register student', error);
-      const errorMsg = error.response?.data?.msg || 'Registration failed. Please check your details and try again.';
-      toast.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
+  const submissionData = {
+    name: fullName,
+    mobileNumber: form.mobileNumber,
+    parentMobileNumber: form.parentMobileNumber,
+    department: form.department,
+    year: form.year,
+    college: form.college,
+    stop: form.stop,
   };
 
-  if (loading && !routeName) {
-    return <div className="loading-container">Loading Form...</div>;
+  try {
+    // Use the public registration endpoint
+    const { data } = await API.post(`/api/v1/routes/${routeId}/students`, submissionData);
+    if (data.success) {
+      toast.success('✅ Registration successful.');
+      setSubmissionStatus('success');
+      // Reset form
+      setForm({
+        firstName: '', middleName: '', lastName: '',
+        mobileNumber: '', parentMobileNumber: '',
+        department: '', year: '',
+        college: 'DYPCET', stop: ''
+      });
+    }
+  } catch (error) {
+    console.error('Failed to register student', error);
+    const errorMsg = error.response?.data?.msg || 'Registration failed. Please check your details and try again.';
+    toast.error(errorMsg);
+    setSubmissionStatus('error');
+  } finally {
+    setIsSubmitting(false);
   }
+};
+
+  if (loading && !routeName) {
+  return <div className="loading-container">Loading Registration Form...</div>;
+}
+
+if (submissionStatus === 'success') {
+  return (
+    <div className="student-form-container">
+      <div className="form-card text-center">
+        <h2 className="form-title">✅ Registration Successful!</h2>
+        <p>Your registration for route <strong>{routeName}</strong> has been submitted. You may now close this page.</p>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="student-form-container">
@@ -139,9 +163,9 @@ const StudentFormScreen = () => {
   
             <input name="stop" value={form.stop} onChange={handleFormChange} placeholder="Your Pickup Point / Bus Stop" required />
           </div>
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Submitting...' : 'Register'}
-          </button>
+         <button type="submit" className="submit-btn" disabled={isSubmitting}>
+  {isSubmitting ? 'Registering... Please wait...' : 'Register'}
+</button>
         </form>
       </div>
     </div>
