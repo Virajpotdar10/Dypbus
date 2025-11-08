@@ -31,7 +31,8 @@ const ResetPasswordScreen = () => {
       );
 
       if (data.success) {
-        setSuccess('Password Reset Successful. Redirecting to login...');
+        setSuccess('Password reset successful!');
+        // Wait for animation, then redirect
         setTimeout(() => navigate('/login'), 3000);
       } else {
         throw new Error('Failed to reset password');
@@ -59,9 +60,18 @@ const ResetPasswordScreen = () => {
         
         <form onSubmit={resetPasswordHandler} className="login-form">
           {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
+          {success && (
+            <div className="success-animation">
+              <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+              </svg>
+              <p className="success-message">{success}</p>
+              <p>Redirecting to login...</p>
+            </div>
+          )}
 
-          {!success && (
+          {!success && !error && (
             <>
               <div className="form-group">
                 <label htmlFor="password">New Password:</label>

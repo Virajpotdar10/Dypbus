@@ -16,7 +16,7 @@ const { protect } = require('../middleware/auth');
 const { cacheRoutes } = require('../middleware/cache');
 
 // Re-route into other resource routers
-router.use('/:routeId/students', protect, studentRoutes.router);
+router.use('/:routeId/students', studentRoutes.router);
 
 router.route('/').get(protect, cacheRoutes, getRoutes).post(protect, createRoute);
 router.route('/:id').get(getRoute).put(protect, updateRoute).delete(protect, deleteRoute);

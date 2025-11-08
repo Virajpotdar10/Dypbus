@@ -10,6 +10,7 @@ const StudentFormScreen = React.lazy(() => import('../screens/StudentFormScreen'
 const RegisterScreen = React.lazy(() => import('../screens/RegisterScreen'));
 const ForgotPasswordScreen = React.lazy(() => import('../screens/ForgotPasswordScreen'));
 const ResetPasswordScreen = React.lazy(() => import('../screens/ResetPasswordScreen'));
+const VerifyOTPScreen = React.lazy(() => import('../screens/VerifyOTPScreen'));
 
 const LoadingSpinner = () => (
   <div className="loading-container" style={{
@@ -140,6 +141,11 @@ const AppRoutes = () => (
     <Route path="/resetpassword/:resettoken" element={ // Add this route
       <LazyRoute>
         <ResetPasswordScreen />
+      </LazyRoute>
+    } />
+    <Route path="/verify-otp" element={ // Add this route
+      <LazyRoute>
+        <VerifyOTPScreen />
       </LazyRoute>
     } />
     <Route path="/forgot-password" element={

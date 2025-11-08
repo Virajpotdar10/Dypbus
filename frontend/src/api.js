@@ -52,10 +52,16 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('userInfo');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      const isStudentForm = sessionStorage.getItem('isStudentForm') === 'true';
+
+      // Only redirect if not on the student form page
+      if (!isStudentForm) {
+        localStorage.removeItem('userInfo');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
+      // On the student form, we just let the error be handled by the component
     }
     return Promise.reject(error);
   }

@@ -2,7 +2,8 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Driver = require('../models/Driver');
-const sendEmail = require('../utils/sendEmail');
+const { sendOTPEmail } = require('../utils/emailService');
+const otpStore = {}; // In-memory store for OTPs
 const { invalidateCache } = require('../middleware/cache');
 const emitDriverEvent = (req, eventType, data) => {
   const io = req.app.get('io');
@@ -219,80 +220,76 @@ exports.updatePassword = async (req, res, next) => {
 };
 
 // @desc    Forgot password
-// @route   POST /api/v1/auth/forgotpassword
+// @route   POST /api/v1/auth/forgot-password
 // @access  Public
 exports.forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
+  const driver = await Driver.findOne({ email });
+
+  if (!driver) {
+    return res.status(404).json({ success: false, msg: 'User with that email does not exist' });
+  }
+
+  // Generate a 6-digit OTP
+  const otp = crypto.randomInt(100000, 999999).toString();
+  const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+  // Store OTP in memory
+  otpStore[email] = { otp, expires };
+
   try {
-    const driver = await Driver.findOne({ email: req.body.email });
-
-    if (!driver) {
-      return res.status(404).json({ success: false, msg: 'There is no user with that email' });
-    }
-
-    // Get reset token
-    const resetToken = driver.getResetPasswordToken();
-
-    await driver.save({ validateBeforeSave: false });
-
-    const message = `
-      <h1>You have requested a password reset</h1>
-      <p>Your password reset token is:</p>
-      <h2>${resetToken}</h2>
-      <p>This token will expire in 30 minutes.</p>
-    `;
-
-    try {
-      await sendEmail({
-        email: driver.email,
-        subject: 'Password reset token',
-        message
-      });
-
-      res.status(200).json({ success: true, data: 'Email sent' });
-    } catch (err) {
-      console.error(err);
-      driver.resetPasswordToken = undefined;
-      driver.resetPasswordExpire = undefined;
-
-      await driver.save({ validateBeforeSave: false });
-
-      return res.status(500).json({ success: false, msg: 'Email could not be sent' });
-    }
-
-  } catch (err) {
-    res.status(500).json({ success: false, msg: 'Server error' });
+    await sendOTPEmail(email, otp);
+    res.status(200).json({ success: true, msg: 'OTP has been sent to your registered email address' });
+  } catch (error) {
+    delete otpStore[email]; // Clean up on failure
+    res.status(500).json({ success: false, msg: 'Error sending email' });
   }
 };
 
+exports.verifyOtp = async (req, res, next) => {
+  const { email, otp } = req.body;
+  const stored = otpStore[email];
+
+  if (!stored || stored.otp !== otp) {
+    return res.status(400).json({ success: false, msg: 'Invalid OTP' });
+  }
+
+  if (Date.now() > stored.expires) {
+    delete otpStore[email];
+    return res.status(400).json({ success: false, msg: 'OTP has expired' });
+  }
+
+  // OTP is verified, mark as ready for password reset
+  stored.verified = true;
+
+  res.status(200).json({ success: true, msg: 'OTP verified successfully' });
+};
+
 // @desc    Reset password
-// @route   PUT /api/v1/auth/resetpassword/:resettoken
+// @route   POST /api/auth/reset-password
 // @access  Public
 exports.resetPassword = async (req, res, next) => {
+  const { email, newPassword } = req.body;
+  const stored = otpStore[email];
+
+  if (!stored || !stored.verified) {
+    return res.status(400).json({ success: false, msg: 'Please verify OTP first' });
+  }
+
   try {
-    // Get hashed token
-    const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(req.params.resettoken)
-      .digest('hex');
-
-    const driver = await Driver.findOne({
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
-
+    const driver = await Driver.findOne({ email });
     if (!driver) {
-      return res.status(400).json({ success: false, msg: 'Invalid token' });
+      return res.status(404).json({ success: false, msg: 'User not found' });
     }
 
-    // Set new password
-    driver.password = req.body.password;
-    driver.resetPasswordToken = undefined;
-    driver.resetPasswordExpire = undefined;
+    driver.password = newPassword; // The pre-save hook will hash it
     await driver.save();
 
-    sendTokenResponse(driver, 200, res);
-  } catch (err) {
-    res.status(400).json({ success: false, msg: err.message });
+    delete otpStore[email]; // OTP has been used
+
+    res.status(200).json({ success: true, msg: 'Password has been reset successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, msg: 'Error resetting password' });
   }
 };
 

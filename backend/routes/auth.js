@@ -5,6 +5,7 @@ const {
   getMe,
   forgotPassword,
   resetPassword,
+  verifyOtp,
   updatePassword,
   updateDetails,
   getNotifications,
@@ -20,8 +21,9 @@ const { protect, admin } = require('../middleware/auth');
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe);
-router.post('/forgotpassword', forgotPassword);
-router.put('/resetpassword/:resettoken', resetPassword);
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-otp', verifyOtp);
+router.post('/reset-password', resetPassword);
 router.put('/updatepassword', protect, updatePassword);
 router.put('/updatedetails', protect, updateDetails);
 

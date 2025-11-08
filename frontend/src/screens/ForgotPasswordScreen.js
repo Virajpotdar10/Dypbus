@@ -1,120 +1,133 @@
 import React, { useState } from 'react';
 import API from '../api';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import logo from './168.jpg';
+import './LoginScreen.css'; // Reusing styles
 
 const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [stage, setStage] = useState('email'); // 'email', 'otp', 'reset'
   const [loading, setLoading] = useState(false);
 
-  const forgotPasswordHandler = async (e) => {
+  const handleSendOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
     try {
-      const response = await API.post(
-        '/api/v1/auth/forgotpassword',
-        { email },
-        config
-      );
-
-      if (response && response.data && response.data.success) {
-        setSuccess('OTP sent to your registered email.');
-      } else {
-        throw new Error('Invalid response from server');
+      const { data } = await API.post('/api/v1/auth/forgot-password', { email });
+      if (data.success) {
+        toast.success(data.msg);
+        setStage('otp');
       }
     } catch (error) {
-      console.error('Forgot password error:', error);
-      
-      let errorMessage = 'Failed to send reset email. Please try again.';
-      
-      if (error.response && error.response.data && error.response.data.msg) {
-        errorMessage = error.response.data.msg;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
-      setEmail('');
-      setTimeout(() => {
-        setError('');
-      }, 5000);
+      toast.error(error.response?.data?.msg || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // First, verify the OTP
+      const { data: verifyData } = await API.post('/api/v1/auth/verify-otp', { email, otp });
+      if (verifyData.success) {
+        // If OTP is correct, reset the password
+        const { data: resetData } = await API.post('/api/v1/auth/reset-password', { email, newPassword });
+        if (resetData.success) {
+          toast.success(resetData.msg);
+          setStage('done'); // Show a final success message
+        }
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.msg || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderEmailStage = () => (
+    <form onSubmit={handleSendOTP} className="login-form">
+      <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        Enter your registered email to receive an OTP.
+      </p>
+      <div className="form-group">
+        <label htmlFor="email">Email:</label>
+        <input
+          type="email"
+          required
+          id="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="form-input"
+        />
+      </div>
+      <button type="submit" className="submit-btn" disabled={loading}>
+        {loading ? <div className="spinner" /> : 'Send OTP'}
+      </button>
+    </form>
+  );
+
+  const renderOtpStage = () => (
+    <form onSubmit={handleResetPassword} className="login-form">
+      <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        An OTP has been sent to <strong>{email}</strong>.
+      </p>
+      <div className="form-group">
+        <label htmlFor="otp">OTP:</label>
+        <input
+          type="text"
+          required
+          id="otp"
+          placeholder="Enter 6-digit OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          className="form-input"
+          maxLength="6"
+        />
+      </div>
+      <div className="form-group">
+        <label htmlFor="newPassword">New Password:</label>
+        <input
+          type="password"
+          required
+          id="newPassword"
+          placeholder="Enter new password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          className="form-input"
+        />
+      </div>
+      <button type="submit" className="submit-btn" disabled={loading}>
+        {loading ? <div className="spinner" /> : 'Reset Password'}
+      </button>
+    </form>
+  );
+
+  const renderDoneStage = () => (
+    <div style={{ textAlign: 'center' }}>
+      <p className="success-message" style={{fontSize: '1.1rem'}}>Password has been reset successfully!</p>
+      <Link to="/login" className="submit-btn" style={{ textDecoration: 'none', display: 'inline-block', width: 'auto', padding: '10px 20px' }}>
+        Back to Login
+      </Link>
+    </div>
+  );
+
   return (
-    <div className="login-container" style={{
-      display: 'flex',
-      minHeight: '100vh',
-      backgroundImage: 'url(/bus.jpeg)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-    }}>
-      <div className="login-overlay" style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      }}></div>
-      
-      <div className="login-card" style={{
-        position: 'relative',
-        zIndex: 1,
-        width: '100%',
-        maxWidth: '450px',
-        margin: 'auto',
-        padding: '2rem',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: '10px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-      }}>
-        <div className="logo-container" style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <img src={logo} alt="Logo" style={{ maxWidth: '120px', height: 'auto', marginBottom: '1rem' }} />
-          <h2 style={{ color: '#1a237e', marginBottom: '0.5rem', fontWeight: '600' }}>Forgot Password</h2>
+    <div className="login-container">
+      <div className="login-overlay"></div>
+      <div className="login-card">
+        <div className="logo-container">
+          <img src={logo} alt="Logo" className="logo" />
+          <h2 className="college-name">Forgot Password</h2>
         </div>
-
-        <form onSubmit={forgotPasswordHandler} style={{ width: '100%' }}>
-          {error && <div style={{ color: '#d32f2f', backgroundColor: '#ffebee', padding: '0.5rem', borderRadius: '4px', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
-          {success && <div style={{ color: '#2e7d32', backgroundColor: '#e8f5e9', padding: '0.5rem', borderRadius: '4px', marginBottom: '1rem', textAlign: 'center' }}>{success}</div>}
-
-          <p style={{ color: '#333', textAlign: 'center', marginBottom: '1.5rem' }}>
-            Please enter the email address you registered with. We will send you a link to change your password.
-          </p>
-
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '500' }}>Email:</label>
-            <input
-              type="email"
-              required
-              id="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '95%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px', fontSize: '1rem' }}
-            />
-          </div>
-          
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', backgroundColor: '#1a237e', color: 'white', border: 'none', borderRadius: '4px', fontSize: '1rem', cursor: 'pointer', marginBottom: '1rem' }}>
-            {loading ? 'Sending...' : 'Send OTP'}
-          </button>
-
-          <div style={{ textAlign: 'center', fontSize: '0.9rem' }}>
-            <Link to="/login" style={{ color: '#1a237e', textDecoration: 'none' }}>Back to Login</Link>
-          </div>
-        </form>
+        {stage === 'email' && renderEmailStage()}
+        {stage === 'otp' && renderOtpStage()}
+        {stage === 'done' && renderDoneStage()}
       </div>
     </div>
   );
