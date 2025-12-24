@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './MainLayout'; 
-const TrackingScreen = React.lazy(() => import('../screens/TrackingScreen'));
+const TrackingScreen = React.lazy(() => import('../screens/TrackingScreen.js'));
 const StudentsScreen = React.lazy(() => import('../screens/StudentsScreen'));
 const DashboardScreen = React.lazy(() => import('../screens/DashboardScreen'));
 const AllStudentsScreen = React.lazy(() => import('../screens/AllStudentsScreen'));

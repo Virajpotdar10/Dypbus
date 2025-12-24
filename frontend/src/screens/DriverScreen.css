@@ -1,0 +1,89 @@
+.driver-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+  align-items: center;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.start-btn {
+  background-color: #28a745;
+  color: white;
+  margin-right: 10px;
+}
+
+.start-btn:hover {
+  background-color: #218838;
+}
+
+.stop-btn {
+  background-color: #dc3545;
+  color: white;
+  margin-right: 10px;
+}
+
+.stop-btn:hover {
+  background-color: #c82333;
+}
+
+.share-btn {
+  background-color: #007bff;
+  color: white;
+  margin-left: auto;
+}
+
+.share-btn:hover {
+  background-color: #0056b3;
+}
+
+.location-log {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.location-log h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.location-log ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.location-log li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.location-log li:last-child {
+  border-bottom: none;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  font-size: 1.2em;
+  color: #666;
+}
