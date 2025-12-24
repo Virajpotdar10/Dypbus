@@ -114,6 +114,38 @@ select:focus {
   cursor: not-allowed;
 }
 
+/* ===== Gender Selection ===== */
+.gender-selection {
+  grid-column: span 2;
+  display: flex;
+  gap: 1rem;
+}
+
+.gender-option {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #d0d4f7;
+  background-color: #fff;
+  color: #0b1e73;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gender-option.selected {
+  border-color: #1a2b8f;
+  background-color: #eef2ff;
+  font-weight: 600;
+  box-shadow: 0 0 5px rgba(26, 43, 143, 0.3);
+}
+
+.gender-option:not(.selected):hover {
+  background-color: #f8f9ff;
+  border-color: #aab1e8;
+}
+
 /* ===== Loading Message ===== */
 .loading-container {
   text-align: center;

@@ -92,6 +92,7 @@ app.use('/api/v1/students', require('./routes/students').studentRouter);
 app.use('/students', require('./routes/students').studentRouter);
 app.use('/api/v1/users', require('./routes/users'));
 app.use('/api/v1/pdf', require('./routes/pdf'));
+app.use('/api/v1/track', require('./routes/tracking'));
 
 // Serve frontend production build
 if (process.env.NODE_ENV === 'production') {
@@ -127,8 +128,21 @@ const PORT = process.env.PORT || 5001;
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
+  console.log('A user connected with socket ID:', socket.id);
+
+  // Listener for a client to join a room
+  socket.on('joinRoom', (routeId) => {
+    if (!routeId) {
+      console.log(`Socket ${socket.id} tried to join a room without a routeId.`);
+      return;
+    }
+    socket.join(routeId);
+    console.log(`Socket ${socket.id} joined room: ${routeId}`);
+  });
+
   socket.on('disconnect', () => {
-    console.log('User disconnected');
+    console.log(`User with socket ID ${socket.id} disconnected`);
+    // Note: Socket.IO automatically handles leaving rooms on disconnect.
   });
 });
 

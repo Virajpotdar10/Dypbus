@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './MainLayout'; 
+const TrackingScreen = React.lazy(() => import('../screens/TrackingScreen'));
 const StudentsScreen = React.lazy(() => import('../screens/StudentsScreen'));
 const DashboardScreen = React.lazy(() => import('../screens/DashboardScreen'));
 const AllStudentsScreen = React.lazy(() => import('../screens/AllStudentsScreen'));
@@ -11,7 +12,6 @@ const RegisterScreen = React.lazy(() => import('../screens/RegisterScreen'));
 const ForgotPasswordScreen = React.lazy(() => import('../screens/ForgotPasswordScreen'));
 const ResetPasswordScreen = React.lazy(() => import('../screens/ResetPasswordScreen'));
 const VerifyOTPScreen = React.lazy(() => import('../screens/VerifyOTPScreen'));
-
 const LoadingSpinner = () => (
   <div className="loading-container" style={{
     display: 'flex',
@@ -128,6 +128,11 @@ const LazyRoute = ({ children, layout: Layout }) => (
 // Main routing component with lazy loading
 const AppRoutes = () => (
   <Routes>
+  <Route path="/track/bus/:routeId" element={
+  <LazyRoute layout={MainLayout}>
+    <TrackingScreen />
+  </LazyRoute>
+} />
     <Route path="/login" element={
       <LazyRoute>
         <LoginScreen />

@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import API, { socket } from '../api'; // Use the centralized API instance and import socket
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus, FiChevronDown,FiRefreshCw , FiEdit2, FiTrash2, FiArrowLeft, FiFilter, FiDownload, FiChevronLeft, FiChevronRight,FiCopy,FiShare2 } from 'react-icons/fi';
-import { toast } from 'react-toastify'; 
+import {
+  FiUsers, FiCheckCircle, FiXCircle, FiSearch, FiPlus,
+  FiChevronDown, FiRefreshCw, FiEdit2, FiTrash2,
+  FiArrowLeft, FiChevronLeft, FiChevronRight,
+  FiCopy, FiShare2, FiSquare
+} from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import './StudentsScreen.css';
 
 const StudentsScreen = () => {
@@ -12,15 +17,12 @@ const StudentsScreen = () => {
   const [routeInfo, setRouteInfo] = useState({});
   const [stats, setStats] = useState({ paid: 0, notPaid: 0 });
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOption, setSortOption] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
   const [selectedStudent] = useState(null); // For sliding panel
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,32 +31,75 @@ const StudentsScreen = () => {
   const [pageSize] = useState(20);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPrevPage, setHasPrevPage] = useState(false);
-const [activeStudentId, setActiveStudentId] = useState(null);
-const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [activeStudentId, setActiveStudentId] = useState(null);
+  const [isTracking, setIsTracking] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+  const locationWatchIdRef = useRef(null);
+  const [form, setForm] = useState({
+    name: '',
+    mobileNumber: '',
+    parentMobileNumber: '',
+    department: '',
+    stop: '',
+    feeStatus: 'Not Paid',
+    college: 'DYPCET',
+    year: ''
+  });
   const [filters, setFilters] = useState({
     feeStatus: '',
     department: '',
     college: ''
   });
 
-  const [form, setForm] = useState({
-    name: '',
-    mobileNumber: '',
-    department: '',
-    parentMobileNumber: '',
-    stop: '',
-    feeStatus: 'Not Paid',
-    college: 'DYPCET',
-    year: ''
-  });
-const clearFilters = useCallback(() => {
+  const clearFilters = useCallback(() => {
     setFilters({ feeStatus: '', department: '', college: '' });
     setSearchTerm('');
     setCurrentPage(1);
-}, []);
+  }, []);
+
+  const checkLocationPermission = useCallback(async () => {
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      if (permission.state === 'denied') {
+        setLocationError('Location permission denied. Please enable it in your browser settings.');
+        return false;
+      }
+      return permission.state === 'granted';
+    } catch (err) {
+      console.warn('Error checking location permission:', err);
+      setLocationError('Error checking location permissions. Please refresh the page and try again.');
+      return false;
+    }
+  }, [setLocationError]);
+  const sendLocation = useCallback((position) => {
+    return new Promise(async (resolve, reject) => {
+      if (!position) {
+        return reject(new Error('No position data provided.'));
+      }
+      
+      const { latitude, longitude } = position.coords;
+      const now = new Date();
+      
+      try {
+        await API.post(`/api/v1/track/${routeInfo?._id}`, {
+          latitude,
+          longitude,
+          timestamp: now.toISOString()
+        });
+        setLocationError(null); // Clear previous errors on success
+        resolve();
+      } catch (err) {
+        console.error('Error sending location:', err);
+        const msg = 'Failed to update location. Please check your connection.';
+        setError(msg);
+        toast.error(msg);
+        reject(err);
+      }
+    });
+  }, [routeInfo?._id, setError, setLocationError]);
+
   const fetchStudents = useCallback(async (page = currentPage, search = searchTerm, action = null) => {
     if (!routeId) return;
-
     setLoading(true);
     setError(null);
     try {
@@ -63,14 +108,13 @@ const clearFilters = useCallback(() => {
         toast.success('All student fees have been reset to Not Paid.');
         page = 1;
         search = '';
-        clearFilters(); 
+        clearFilters();
       }
 
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pageSize.toString(),
-        sortBy: sortOption,
-        sortOrder: sortOrder,
+
         ...(search && { search }),
         ...(filters.feeStatus && { feeStatus: filters.feeStatus }),
         ...(filters.department && { department: filters.department }),
@@ -100,7 +144,7 @@ const clearFilters = useCallback(() => {
     } finally {
       setLoading(false);
     }
-  }, [routeId, currentPage, pageSize, sortOption, sortOrder, filters, searchTerm, clearFilters]);
+  }, [routeId, currentPage, pageSize, filters, searchTerm, clearFilters]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -113,105 +157,117 @@ const clearFilters = useCallback(() => {
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
   useEffect(() => {
     if (!routeId) return;
 
-  
     socket.connect();
-    socket.emit('joinRouteRoom', routeId);
-const handleStudentUpdate = ({ student: updatedStudent }) => {
-  if (updatedStudent.route?._id === routeId || updatedStudent.route === routeId) {
-    setStudents((prevStudents) =>
-      prevStudents.map((s) => (s._id === updatedStudent._id ? updatedStudent : s))
-    );
-    toast.info(`Student ${updatedStudent.name} was updated.`);
-  }
-};
-const handleStudentAdd = ({ student: newStudent }) => {
-  if (newStudent.route?._id === routeId || newStudent.route === routeId) {
-    setStudents((prevStudents) => [...prevStudents, { ...newStudent, isNew: true }]);
-    setTotalStudents((prev) => prev + 1);
-    toast.success(`New student ${newStudent.name} was added.`);
-  }
-};
 
-const handleStudentDelete = ({ studentId, routeId: studentRouteId }) => {
-  if (studentRouteId === routeId) {
-    setStudents((prevStudents) =>
-      prevStudents.filter((s) => s._id !== studentId)
-    );
-    setTotalStudents((prev) => prev - 1);
-    toast.warn('A student was deleted.');
-  }
-};
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+      socket.emit('joinRouteRoom', routeId);
+    });
 
-socket.on('student:updated', handleStudentUpdate);
-socket.on('student:added', handleStudentAdd);
-socket.on('student:deleted', handleStudentDelete);
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      toast.error('Could not connect to the server. Real-time updates are disabled.');
+    });
 
-return () => {
-  socket.emit('leaveRouteRoom', routeId);
-  socket.off('student:updated', handleStudentUpdate);
-  socket.off('student:added', handleStudentAdd);
-  socket.off('student:deleted', handleStudentDelete);
-  socket.disconnect();
-};
+    const handleStudentUpdate = ({ student: updatedStudent }) => {
+      if (updatedStudent.route?._id === routeId || updatedStudent.route === routeId) {
+        setStudents((prevStudents) =>
+          prevStudents.map((s) => (s._id === updatedStudent._id ? updatedStudent : s))
+        );
+        toast.info(`Student ${updatedStudent.name} was updated.`);
+      }
+    };
+
+    const handleStudentAdd = ({ student: newStudent }) => {
+      if (newStudent.route?._id === routeId || newStudent.route === routeId) {
+        setStudents((prevStudents) => [...prevStudents, { ...newStudent, isNew: true }]);
+        setTotalStudents((prev) => prev + 1);
+        toast.success(`New student ${newStudent.name} was added.`);
+      }
+    };
+
+    const handleStudentDelete = ({ studentId, routeId: studentRouteId }) => {
+      if (studentRouteId === routeId) {
+        setStudents((prevStudents) =>
+          prevStudents.filter((s) => s._id !== studentId)
+        );
+        setTotalStudents((prev) => prev - 1);
+        toast.warn('A student was deleted.');
+      }
+    };
+
+    socket.on('student:updated', handleStudentUpdate);
+    socket.on('student:added', handleStudentAdd);
+    socket.on('student:deleted', handleStudentDelete);
+
+    return () => {
+      socket.emit('leaveRouteRoom', routeId);
+      socket.off('student:updated', handleStudentUpdate);
+      socket.off('student:added', handleStudentAdd);
+      socket.off('student:deleted', handleStudentDelete);
+      socket.disconnect();
+    };
   }, [routeId]);
+
   const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-const handleFormSubmit = async (e) => {
-  e.preventDefault();
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
 
-  // --- Validation ---
-  const requiredFields = ['name', 'mobileNumber', 'parentMobileNumber', 'department', 'college', 'stop'];
-  for (const field of requiredFields) {
-    if (!form[field] || form[field].trim() === '') {
-      toast.error(`Please fill out the ${field.replace(/([A-Z])/g, ' $1')} field.`);
-      return;
-    }
-  }
-
-  setLoading(true);
-  setError(null);
-
-  // --- Capitalization ---
-  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  const processedForm = {
-    ...form,
-    name: form.name.split(' ').map(capitalize).join(' '),
-    stop: form.stop.split(' ').map(capitalize).join(' '),
-  };
-  
-  const url = isEditing ? `/api/v1/students/${isEditing._id}` : `/api/v1/routes/${routeId}/students`;
-  const method = isEditing ? 'put' : 'post';
-  try {
-    const { data } = await API[method](url, processedForm);
-    if (data.success) {
-      toast.success(`Student ${isEditing ? 'updated' : 'added'} successfully!`);
-      if (isEditing) {
-        setStudents(prev => prev.map(student => student._id === isEditing._id ? data.data : student));
-      } else {
-        setStudents(prev => [...prev, data.data]);
-        setTotalStudents(prev => prev + 1);
+    // --- Validation ---
+    const requiredFields = ['name', 'mobileNumber', 'parentMobileNumber', 'department', 'college', 'stop'];
+    for (const field of requiredFields) {
+      if (!form[field] || form[field].trim() === '') {
+        toast.error(`Please fill out the ${field.replace(/([A-Z])/g, ' $1')} field.`);
+        return;
       }
-      closeModal();
     }
-  } catch (error) {
-    console.error('Error saving student:', error);
-    const errorMsg = error.response?.data?.msg || `Could not ${isEditing ? 'update' : 'add'} student`;
-    setError(errorMsg);
-    toast.error(errorMsg);
-  } finally {
-    setLoading(false);
-  }
-};
-const copyToClipboard = () => {
+
+    setLoading(true);
+    setError(null);
+
+    // --- Capitalization ---
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    const processedForm = {
+      ...form,
+      name: form.name.split(' ').map(capitalize).join(' '),
+      stop: form.stop.split(' ').map(capitalize).join(' '),
+    };
+
+    const url = isEditing ? `/api/v1/students/${isEditing._id}` : `/api/v1/routes/${routeId}/students`;
+    const method = isEditing ? 'put' : 'post';
+    try {
+      const { data } = await API[method](url, processedForm);
+      if (data.success) {
+        toast.success(`Student ${isEditing ? 'updated' : 'added'} successfully!`);
+        if (isEditing) {
+          setStudents(prev => prev.map(student => student._id === isEditing._id ? data.data : student));
+        } else {
+          setStudents(prev => [...prev, data.data]);
+          setTotalStudents(prev => prev + 1);
+        }
+        closeModal();
+      }
+    } catch (error) {
+      console.error('Error saving student:', error);
+      const errorMsg = error.response?.data?.msg || `Could not ${isEditing ? 'update' : 'add'} student`;
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const copyToClipboard = () => {
     const link = `${window.location.origin}/route/${routeId}`;
     navigator.clipboard.writeText(link);
     toast.success('Registration link copied to clipboard!');
   };
 
-// Add this function right after it:
+  // Add this function right after it:
   const handleShare = () => {
     const link = `${window.location.origin}/route/${routeId}`;
     if (navigator.share) {
@@ -220,7 +276,7 @@ const copyToClipboard = () => {
         text: `Student registration link for route: ${routeInfo.routeName}`,
         url: link,
       })
-      .catch((error) => console.error('Error sharing', error));
+        .catch((error) => console.error('Error sharing', error));
     } else {
       toast.info('Sharing is not supported on this device.');
     }
@@ -241,16 +297,16 @@ const copyToClipboard = () => {
       });
     } else {
       setIsEditing(null);
-      setForm({ name: '', mobileNumber: '',parentMobileNumber: '', department: '', stop: '', feeStatus: 'Not Paid', college: 'DYPCET', year: '' });
+      setForm({ name: '', mobileNumber: '', parentMobileNumber: '', department: '', stop: '', feeStatus: 'Not Paid', college: 'DYPCET', year: '' });
     }
     setShowModal(true);
   };
-  
+
 
   const closeModal = () => {
     setShowModal(false); // Correctly close the add/edit modal
     setIsEditing(null);
-    setForm({ name: '', mobileNumber: '',parentMobileNumber: '', department: '', stop: '', feeStatus: 'Not Paid', college: 'DYPCET' });
+    setForm({ name: '', mobileNumber: '', parentMobileNumber: '', department: '', stop: '', feeStatus: 'Not Paid', college: 'DYPCET' });
   };
 
   const openDeleteModal = (student) => {
@@ -269,8 +325,8 @@ const copyToClipboard = () => {
     const newStatus = student.feeStatus === 'Paid' ? 'Not Paid' : 'Paid';
     try {
       await API.put(`/api/v1/students/${student._id}`, { feeStatus: newStatus });
-      setStudents(prevStudents => 
-        prevStudents.map(s => 
+      setStudents(prevStudents =>
+        prevStudents.map(s =>
           s._id === student._id ? { ...s, feeStatus: newStatus } : s
         )
       );
@@ -286,7 +342,7 @@ const copyToClipboard = () => {
       await API.delete(`/api/v1/students/${studentToDelete._id}`);
       toast.success('Student deleted successfully!');
       closeDeleteModal();
-      fetchStudents(); 
+      fetchStudents();
     } catch (error) {
       console.error('Error deleting student:', error);
       toast.error('Could not delete student');
@@ -298,96 +354,131 @@ const copyToClipboard = () => {
       fetchStudents(newPage);
     }
   };
-  const handleSortChange = (newSort) => {
-    if (newSort === sortOption) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortOption(newSort);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
-    setShowSortDropdown(false);
-  };
-
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => ({ ...prev, [filterType]: value }));
     setCurrentPage(1);
   };
-
-    const exportStudents = async (format) => {
-    if (format === 'pdf') {
-      setIsExportingPdf(true);
+  const handleStartTracking = useCallback(async () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
     }
+
     try {
-      const { data } = await API.get(`/api/v1/routes/${routeId}/students/export.${format}`,
-        { responseType: 'blob' }
-      );
-      const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-      const safeName = (routeInfo.routeName || 'route').replace(/[^a-z0-9-]+/gi,'_');
-      handleDownload(data, `${safeName}-students-${ts}.${format}`);
-      toast.success(`Exported ${format.toUpperCase()} successfully`);
-    } catch (err) {
-      console.error('Export error:', err);
-      toast.error(`Failed to export ${format.toUpperCase()}`);
-    } finally {
-      if (format === 'pdf') {
-        setIsExportingPdf(false);
+      const hasPermission = await checkLocationPermission();
+      if (!hasPermission) {
+        return; // Error is already set by checkLocationPermission
       }
+
+      // First, get an immediate location fix to ensure it works.
+      navigator.geolocation.getCurrentPosition(
+        async (initialPosition) => {
+          setIsTracking(true);
+          toast.success('Live tracking started!');
+          
+          // Send the initial position immediately
+          await sendLocation(initialPosition);
+
+          // After success, start watching for continuous updates
+          locationWatchIdRef.current = navigator.geolocation.watchPosition(
+            sendLocation, // Reuse the same function for subsequent updates
+            (error) => { // Error handler for watchPosition
+              let errorMessage;
+              switch (error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = 'Location access was denied during tracking.';
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = 'Location information became unavailable.';
+                  break;
+                default:
+                  errorMessage = 'An error occurred during live tracking.';
+                  break;
+              }
+              setLocationError(errorMessage);
+              toast.error(errorMessage);
+              setIsTracking(false); // Stop tracking on error
+              if (locationWatchIdRef.current) {
+                navigator.geolocation.clearWatch(locationWatchIdRef.current);
+              }
+            },
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+          );
+        },
+        (error) => { // Error handler for the initial getCurrentPosition
+          const errorMessage = 'Could not get an initial location. Please try again.';
+          setLocationError(errorMessage);
+          toast.error(errorMessage);
+          setIsTracking(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } catch (e) {
+      toast.error('An unexpected error occurred when starting tracking.');
+      setIsTracking(false);
     }
+  }, [checkLocationPermission, sendLocation, setLocationError]);
+
+  const handleStopTracking = () => {
+    setIsTracking(false);
+    if (locationWatchIdRef.current) {
+      navigator.geolocation.clearWatch(locationWatchIdRef.current);
+      locationWatchIdRef.current = null;
+    }
+    toast.info('Live tracking stopped.');
   };
 
-  const handleDownload = (blob, filename) => {
-    const url = window.URL.createObjectURL(new Blob([blob]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  const handleShareLink = () => {
+    if (!routeId) return;
+    const trackingLink = `${window.location.origin}/track/bus/${routeId}`;
+    navigator.clipboard.writeText(trackingLink)
+      .then(() => toast.success('Tracking link copied to clipboard!'))
+      .catch(() => toast.error('Failed to copy link.'));
   };
 
-  const sortOptions = ['createdAt', 'name', 'department', 'feeStatus', 'stop'];
-
-  return (
-    <div className="students-screen-container">
-      <header className="students-header">
-        <div className="header-left">
-          <button onClick={() => navigate('/')} className="back-link"><FiArrowLeft /> Back</button>
-          <h2 className="header-title">{routeInfo.routeName || 'Loading...'}</h2>
-          <div className="header-stats">
-            <span><FiUsers /> {totalStudents} Total</span>
-            <span><FiCheckCircle style={{ color: 'green' }} /> {stats.paid} Paid</span>
-            <span><FiXCircle style={{ color: 'red' }} /> {stats.notPaid} Not Paid</span>
-          </div>
+return (
+  <div className="students-screen-container">
+    <header className="students-header">
+      <div className="header-left">
+        <button onClick={() => navigate('/')} className="back-link"><FiArrowLeft /> Back</button>
+        <h2 className="header-title">{routeInfo.routeName || 'Loading...'}</h2>
+        <div className="header-stats">
+          <span><FiUsers /> {totalStudents} Total</span>
+          <span><FiCheckCircle style={{ color: 'green' }} /> {stats.paid} Paid</span>
+          <span><FiXCircle style={{ color: 'red' }} /> {stats.notPaid} Not Paid</span>
         </div>
-        <div className="header-actions">
-          <button onClick={() => exportStudents('csv')} title="Export CSV" className="export-button">
-            <FiDownload /> CSV
+      </div>
+      <div className="header-actions">
+        <div className="tracking-controls">
+          {!isTracking ? (
+            <button
+              onClick={handleStartTracking}
+              disabled={isTracking}
+              className="tracking-button"
+            >
+              {isTracking ? 'Tracking...' : 'Start Live Tracking'}
+            </button>
+          ) : (
+            <button onClick={handleStopTracking} className="stop-tracking-btn" title="Stop Live Tracking">
+              <FiSquare /> Stop Tracking
+            </button>
+          )}
+          <button onClick={handleShareLink} className="share-link-btn" title="Share Tracking Link" >
+            <FiShare2 /> Share Tracking Link
           </button>
-                            <button 
-            onClick={() => exportStudents('pdf')} 
-            title="Export PDF" 
-            className="export-button"
-            disabled={isExportingPdf}
-          >
-            {isExportingPdf ? (
-              <div className="button-spinner"></div>
-            ) : (
-              <><FiDownload /> PDF</>
-            )}
-          </button>
-          <button onClick={() => {if (window.confirm('Are you sure you want to reset fees for all students? This cannot be undone.')) {fetchStudents(1, null, 'reset');}}} className="export-button">
-            <FiRefreshCw /> Reset Fees
-          </button>
-          <button onClick={copyToClipboard} title="Copy Registration Link" className="export-button">
+        </div>
+        {locationError && <div className="location-error-message">{locationError}</div>}
+        <button onClick={() => { if (window.confirm('Are you sure you want to reset fees for all students? This cannot be undone.')) { fetchStudents(1, null, 'reset'); } }} className="export-button">
+          <FiRefreshCw /> Reset Fees
+        </button>
+        <button onClick={copyToClipboard} title="Copy Registration Link" className="export-button">
           <FiCopy /> Copy Link
         </button>
-          <button onClick={handleShare} title="Share Registration Link" className="export-button">
-    <FiShare2 /> Share
-  </button>
-        </div>
-        
+        <button onClick={handleShare} title="Share Registration Link" className="export-button">
+          <FiShare2 /> Share Bus Registration Form
+        </button>
+      </div>
+
       </header>
 
       <main className="students-main">
@@ -395,40 +486,17 @@ const copyToClipboard = () => {
         <div className="controls-container">
           <div className="search-input-wrapper">
             <FiSearch className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search students by name, department, or phone" 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
+            <input
+              type="text"
+              placeholder="Search students by name, department, or phone"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
               className="search-input"
             />
           </div>
-
-          <div className="sort-dropdown-wrapper">
-            <button 
-              onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className="sort-button"
-            >
-              <FiFilter />Sort By
-            </button>
-            {showSortDropdown && (
-              <div className="sort-dropdown">
-                {sortOptions.map(option => (
-                  <button
-                    key={option}
-                    onClick={() => handleSortChange(option)}
-                    className={`sort-option ${sortOption === option ? 'active' : ''}`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          
           <div className="filters-container">
-            <select 
-              value={filters.feeStatus} 
+            <select
+              value={filters.feeStatus}
               onChange={e => handleFilterChange('feeStatus', e.target.value)}
               className="filter-select"
             >
@@ -436,9 +504,9 @@ const copyToClipboard = () => {
               <option value="Paid">Paid</option>
               <option value="Not Paid">Not Paid</option>
             </select>
-            
-            <select 
-              value={filters.college} 
+
+            <select
+              value={filters.college}
               onChange={e => handleFilterChange('college', e.target.value)}
               className="filter-select"
             >
@@ -447,13 +515,13 @@ const copyToClipboard = () => {
               <option value="DYPSEM">DYPSEM</option>
               <option value="Diploma">Diploma</option>
             </select>
-            
+
             <button onClick={clearFilters} className="clear-filters-btn">
               Clear Filters
             </button>
           </div>
         </div>
-    {loading && (
+        {loading && (
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <p>Loading students...</p>
@@ -481,17 +549,17 @@ const copyToClipboard = () => {
               </div>
             ) : (
               students.map(student => (
-           
-<StudentCard 
-  key={student._id} 
-  student={student} 
-  isActive={activeStudentId === student._id}
-  isNew={student.isNew}
-  onToggleDetails={() => toggleStudentDetails(student._id)}
-  onEdit={() => openModal(student)}
-  onDelete={() => openDeleteModal(student)}
-  onToggleFee={() => handleToggleFeeStatus(student)} 
-/>
+
+                <StudentCard
+                  key={student._id}
+                  student={student}
+                  isActive={activeStudentId === student._id}
+                  isNew={student.isNew}
+                  onToggleDetails={() => toggleStudentDetails(student._id)}
+                  onEdit={() => openModal(student)}
+                  onDelete={() => openDeleteModal(student)}
+                  onToggleFee={() => handleToggleFeeStatus(student)}
+                />
               ))
             )}
           </div>
@@ -504,14 +572,14 @@ const copyToClipboard = () => {
               Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalStudents)} of {totalStudents} students
             </div>
             <div className="pagination-controls">
-              <button 
+              <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={!hasPrevPage}
                 className="pagination-btn"
               >
                 <FiChevronLeft /> Previous
               </button>
-              
+
               <div className="page-numbers">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
@@ -524,7 +592,7 @@ const copyToClipboard = () => {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -536,8 +604,8 @@ const copyToClipboard = () => {
                   );
                 })}
               </div>
-              
-              <button 
+
+              <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={!hasNextPage}
                 className="pagination-btn"
@@ -561,8 +629,8 @@ const copyToClipboard = () => {
             <h3>{isEditing ? 'Edit Student' : 'Add New Student'}</h3>
             <form onSubmit={handleFormSubmit}>
               <div className="modal-form-grid">
-              <ModalInput name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') })} placeholder="Full Name" required />
-<ModalInput name="mobileNumber" value={form.mobileNumber} onChange={handleFormChange} placeholder="Mobile Number" />
+                <ModalInput name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') })} placeholder="Full Name" required />
+                <ModalInput name="mobileNumber" value={form.mobileNumber} onChange={handleFormChange} placeholder="Mobile Number" />
                 <div className="modal-input-group-single">
                   <label>Department</label>
                   <select name="department" value={form.department} onChange={handleFormChange} required>
@@ -577,8 +645,8 @@ const copyToClipboard = () => {
                     <option value="ARCH">ARCHITECTURE</option>
                   </select>
                 </div>
-<ModalInput name="stop" value={form.stop} onChange={handleFormChange} placeholder="Bus Stop" required />
-<ModalInput name="parentMobileNumber" value={form.parentMobileNumber} onChange={handleFormChange} placeholder="Parent Mobile Number" />
+                <ModalInput name="stop" value={form.stop} onChange={handleFormChange} placeholder="Bus Stop" required />
+                <ModalInput name="parentMobileNumber" value={form.parentMobileNumber} onChange={handleFormChange} placeholder="Parent Mobile Number" />
                 <div className="modal-input-group-single">
                   <label>Year</label>
                   <select name="year" value={form.year} onChange={handleFormChange} required>
@@ -638,9 +706,9 @@ const copyToClipboard = () => {
 
       {/* Student Details Sliding Panel */}
       {isPanelOpen && (
-        <StudentSlidingPanel 
-          student={selectedStudent} 
-          onClose={() => setIsPanelOpen(false)} 
+        <StudentSlidingPanel
+          student={selectedStudent}
+          onClose={() => setIsPanelOpen(false)}
           onEdit={openModal}
           onDelete={openDeleteModal}
         />
@@ -679,7 +747,7 @@ const StudentSlidingPanel = ({ student, onClose, onEdit, onDelete }) => {
 const ModalInput = ({ name, ...props }) => (
   <div className="modal-input-group-single">
     <label>{name.replace('Number', ' Number')}</label>
-    <input name={name} {...props}  />
+    <input name={name} {...props} />
   </div>
 );
 const StudentCard = ({ student, isActive, isNew, onToggleDetails, onEdit, onDelete, onToggleFee }) => (
@@ -710,12 +778,12 @@ const StudentCard = ({ student, isActive, isNew, onToggleDetails, onEdit, onDele
         <div className="details-actions">
           <button onClick={onEdit} className="btn btn-secondary"><FiEdit2 /> Edit</button>
           <button onClick={onDelete} className="btn btn-danger"><FiTrash2 /> Delete</button>
-          <button 
-    onClick={onToggleFee} 
-    className={`btn ${student.feeStatus === 'Paid' ? 'btn-warning' : 'btn-success'}`}
-  >
-    {student.feeStatus === 'Paid' ? 'Mark as Not Paid' : 'Mark as Paid'}
-  </button>
+          <button
+            onClick={onToggleFee}
+            className={`btn ${student.feeStatus === 'Paid' ? 'btn-warning' : 'btn-success'}`}
+          >
+            {student.feeStatus === 'Paid' ? 'Mark as Not Paid' : 'Mark as Paid'}
+          </button>
 
         </div>
       </div>

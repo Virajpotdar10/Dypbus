@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api';
 import { toast } from 'react-toastify';
-import './StudentFormScreen.css'; // We will create this file next
+import './StudentFormScreen.css'; 
 
 const StudentFormScreen = () => {
   const { routeId } = useParams();
@@ -20,7 +20,10 @@ const [submissionStatus, setSubmissionStatus] = useState(null);
     department: '',
     year: '',
     college: 'DYPCET',
-    stop: ''
+    stop: '',
+    uniqueNumber: '',
+    rollNumber: '',
+    gender: ''
   });
  useEffect(() => {
   sessionStorage.setItem('isStudentForm', 'true');
@@ -77,6 +80,9 @@ useEffect(() => {
     year: form.year,
     college: form.college,
     stop: form.stop,
+    uniqueNumber: form.uniqueNumber,
+    rollNumber: form.rollNumber,
+    gender: form.gender,
   };
 
   try {
@@ -90,7 +96,8 @@ useEffect(() => {
         firstName: '', middleName: '', lastName: '',
         mobileNumber: '', parentMobileNumber: '',
         department: '', year: '',
-        college: 'DYPCET', stop: ''
+        college: 'DYPCET', stop: '',
+        uniqueNumber: '', rollNumber: '', gender: ''
       });
     }
   } catch (error) {
@@ -130,6 +137,12 @@ if (submissionStatus === 'success') {
             <input name="lastName" value={form.lastName} onChange={handleFormChange} placeholder="Last Name" required />
             <input name="mobileNumber" value={form.mobileNumber} onChange={handleFormChange} placeholder="Your Mobile Number" required />
             <input name="parentMobileNumber" value={form.parentMobileNumber} onChange={handleFormChange} placeholder="Parent's Mobile Number" required />
+            <input name="uniqueNumber" value={form.uniqueNumber} onChange={handleFormChange} placeholder="Unique Number" required />
+            <input name="rollNumber" value={form.rollNumber} onChange={handleFormChange} placeholder="Roll Number" required />
+            <div className="gender-selection">
+              <div className={`gender-option ${form.gender === 'Male' ? 'selected' : ''}`} onClick={() => setForm({...form, gender: 'Male'})}>Male</div>
+              <div className={`gender-option ${form.gender === 'Female' ? 'selected' : ''}`} onClick={() => setForm({...form, gender: 'Female'})}>Female</div>
+            </div>
             <select name="college" value={form.college} onChange={handleFormChange}>
               <option value="DYPCET">DYPCET</option>
               <option value="DYPSEM">DYPSEM</option>
@@ -172,4 +185,4 @@ if (submissionStatus === 'success') {
   );
 };
 
-export default StudentFormScreen;   
+export default StudentFormScreen;

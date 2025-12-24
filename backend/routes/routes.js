@@ -7,7 +7,6 @@ const {
   deleteRoute,
 } = require('../controllers/routes');
 
-// Include other resource routers
 const studentRoutes = require('./students');
 
 const router = express.Router();

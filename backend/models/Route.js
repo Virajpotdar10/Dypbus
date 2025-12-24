@@ -1,5 +1,21 @@
 const mongoose = require('mongoose');
 
+const StopSchema = new mongoose.Schema({
+  stopName: {
+    type: String,
+    required: [true, 'Please add a stop name'],
+    trim: true,
+  },
+  latitude: {
+    type: Number,
+    required: [true, 'Please add a latitude'],
+  },
+  longitude: {
+    type: Number,
+    required: [true, 'Please add a longitude'],
+  },
+});
+
 const RouteSchema = new mongoose.Schema({
   routeName: {
     type: String,
@@ -11,6 +27,7 @@ const RouteSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a bus number'],
   },
+  stops: [StopSchema], // Added stops array
   capacity: {
     type: Number,
     default: 70,
@@ -25,7 +42,6 @@ const RouteSchema = new mongoose.Schema({
     default: Date.now,
   },
 }, {
- 
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
 });
@@ -33,9 +49,11 @@ const RouteSchema = new mongoose.Schema({
 RouteSchema.virtual('link').get(function() {
   return `/route/${this._id}`;
 });
+
 RouteSchema.pre('remove', async function(next) {
   console.log(`Students being removed from route ${this._id}`);
   await this.model('Student').deleteMany({ route: this._id });
   next();
 });
+
 module.exports = mongoose.model('Route', RouteSchema);
